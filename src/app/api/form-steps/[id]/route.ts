@@ -5,10 +5,10 @@ import { debugLog } from '@/lib/debug'
 // 폼 단계 수정
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id
+    const { id } = await params
     const data = await request.json()
     debugLog.info('Form step update request started', { stepId: id }, 'API/form-steps')
 
@@ -80,10 +80,10 @@ export async function PATCH(
 // 폼 단계 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id
+    const { id } = await params
     debugLog.info('Form step deletion request started', { stepId: id }, 'API/form-steps')
 
     const supabase = createSupabaseServiceRoleClient()
