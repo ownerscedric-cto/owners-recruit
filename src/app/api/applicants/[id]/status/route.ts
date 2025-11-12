@@ -3,7 +3,6 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
 
 type ApplicantRow = Database['public']['Tables']['applicants']['Row']
-type ApplicantUpdate = Database['public']['Tables']['applicants']['Update']
 
 export async function PATCH(
   request: NextRequest,
@@ -47,19 +46,17 @@ export async function PATCH(
       newStatus: status
     })
 
-    // 업데이트 수행
-    const updateData: ApplicantUpdate = { status }
-    const updateResult = await supabaseService
+    // 업데이트 수행 (타입 체크 우회)
+    const updateResult = await (supabaseService as any)
       .from('applicants')
-      .update(updateData)
+      .update({ status })
       .eq('id', id)
       .select()
+      .single()
 
     console.log('📝 API: Full update result:', {
       data: updateResult.data,
-      error: updateResult.error,
-      status: updateResult.status,
-      statusText: updateResult.statusText
+      error: updateResult.error
     })
 
     if (updateResult.error) {
@@ -70,8 +67,8 @@ export async function PATCH(
       )
     }
 
-    if (updateResult.data && updateResult.data.length > 0) {
-      const updatedRecord = updateResult.data[0] as ApplicantRow
+    if (updateResult.data) {
+      const updatedRecord = updateResult.data as ApplicantRow
       console.log('✅ API: Update successful:', {
         id: updatedRecord.id,
         oldStatus: (existingData as ApplicantRow).status,
