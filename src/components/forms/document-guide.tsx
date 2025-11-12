@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
-import { FileText, Calendar, ExternalLink } from "lucide-react";
+import { FileText, Calendar, ExternalLink, Download } from "lucide-react";
 import { commonDocuments, newApplicantDocuments, experiencedApplicantDocuments, type DocumentLink } from "@/data/documents";
 import { DatePicker } from "@/components/ui/date-picker";
+import { DownloadableFile, getDownloadableFiles } from "@/lib/files";
 
 interface DocumentGuideProps {
   type: "new" | "experienced";
@@ -21,8 +22,33 @@ export function DocumentGuide({
   onDocumentsConfirmedChange,
   onPreparationDateChange,
 }: DocumentGuideProps) {
+  const [downloadableFiles, setDownloadableFiles] = useState<DownloadableFile[]>([])
+  const [loadingFiles, setLoadingFiles] = useState(true)
+
   const typeSpecificDocs =
     type === "new" ? newApplicantDocuments : experiencedApplicantDocuments;
+
+  useEffect(() => {
+    const fetchDownloadableFiles = async () => {
+      setLoadingFiles(true)
+      try {
+        const result = await getDownloadableFiles(true) // 활성화된 파일만
+        if (result.success) {
+          setDownloadableFiles(result.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching downloadable files:', error)
+      } finally {
+        setLoadingFiles(false)
+      }
+    }
+
+    fetchDownloadableFiles()
+  }, [])
+
+  const handleFileDownload = (file: DownloadableFile) => {
+    window.open(`/api/files/${file.id}/download`, '_blank')
+  }
 
   return (
     <div className="space-y-6">
@@ -157,6 +183,49 @@ export function DocumentGuide({
             </div>
           ))}
         </div>
+
+        {/* 다운로드 가능한 파일들 */}
+        {downloadableFiles.length > 0 && (
+          <div className="space-y-3">
+            <h5 className="font-medium text-gray-700">다운로드 가능한 문서</h5>
+            {loadingFiles ? (
+              <div className="text-sm text-gray-500">파일을 불러오는 중...</div>
+            ) : (
+              <div className="space-y-2">
+                {downloadableFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="p-3 border border-indigo-200 rounded-lg bg-indigo-50"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h6 className="font-medium text-indigo-900">{file.title}</h6>
+                        {file.description && (
+                          <p className="text-sm text-indigo-700 mt-1">
+                            {file.description}
+                          </p>
+                        )}
+                        <div className="text-xs text-indigo-600 mt-1">
+                          {file.category === 'guide' && '📋 입사 가이드'}
+                          {file.category === 'form' && '📄 양식'}
+                          {file.category === 'manual' && '📖 매뉴얼'}
+                          {file.category === 'general' && '📁 일반'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleFileDownload(file)}
+                        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ml-3"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        다운로드
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 확인 및 날짜 선택 */}
         <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">

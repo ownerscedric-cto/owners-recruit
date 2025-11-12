@@ -1,3 +1,5 @@
+'use client'
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +19,94 @@ import {
   BookOpen,
   AlertCircle,
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getDownloadableFiles } from "@/lib/files";
+import type { DownloadableFile } from "@/lib/files";
 
 export default function ApplicantGuidePage() {
+  const [guideFile, setGuideFile] = useState<DownloadableFile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadGuideFile = async () => {
+      try {
+        // 먼저 데이터베이스에서 시도
+        const result = await getDownloadableFiles(true, 'guide')
+        if (result.success && result.data && result.data.length > 0) {
+          // 가장 최근에 업로드된 가이드 파일 선택
+          const latestGuide = result.data
+            .filter((file: DownloadableFile) => file.title.includes('위촉') || file.title.includes('해촉'))
+            .sort((a: DownloadableFile, b: DownloadableFile) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+
+          setGuideFile(latestGuide || null)
+        } else {
+          // 데이터베이스에서 실패하면 파일 시스템에서 직접 조회
+          const fallbackResponse = await fetch('/api/files/guide')
+          if (fallbackResponse.ok) {
+            const fallbackResult = await fallbackResponse.json()
+            if (fallbackResult.success && fallbackResult.data && fallbackResult.data.length > 0) {
+              setGuideFile(fallbackResult.data[0]) // 최신 파일
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading guide file:', error)
+        // 데이터베이스 실패 시 파일 시스템에서 시도
+        try {
+          const fallbackResponse = await fetch('/api/files/guide')
+          if (fallbackResponse.ok) {
+            const fallbackResult = await fallbackResponse.json()
+            if (fallbackResult.success && fallbackResult.data && fallbackResult.data.length > 0) {
+              setGuideFile(fallbackResult.data[0])
+            }
+          }
+        } catch (fallbackError) {
+          console.error('Fallback error:', fallbackError)
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadGuideFile()
+  }, [])
+
+  const handleDownload = async () => {
+    if (!guideFile) return
+
+    try {
+      // 파일명으로 된 ID인 경우 (파일 시스템 접근) vs UUID인 경우 (데이터베이스 접근) 구분
+      const isFileSystemFile = guideFile.id.includes('.pdf')
+
+      let response
+      if (isFileSystemFile) {
+        // 파일 시스템에서 직접 다운로드
+        response = await fetch(`/api/files/guide/download/${guideFile.id}`)
+      } else {
+        // 데이터베이스를 통한 다운로드
+        response = await fetch(`/api/files/${guideFile.id}/download`)
+      }
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = guideFile.file_name
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      } else {
+        alert('파일 다운로드에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('Download error:', error)
+      alert('파일 다운로드 중 오류가 발생했습니다.')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="입사 가이드" showBackButton backUrl="/" />
@@ -105,14 +193,37 @@ export default function ApplicantGuidePage() {
                 </div>
               </div>
               <div className="flex justify-center">
-                <Button
-                  className="w-full sm:w-auto"
-                  variant="outline"
-                  size="lg"
-                >
-                  <Download className="h-5 w-5 mr-2" />
-                  위촉/해촉 안내서 다운로드
-                </Button>
+                {isLoading ? (
+                  <Button
+                    className="w-full sm:w-auto"
+                    variant="outline"
+                    size="lg"
+                    disabled
+                  >
+                    <Download className="h-5 w-5 mr-2" />
+                    로딩 중...
+                  </Button>
+                ) : guideFile ? (
+                  <Button
+                    className="w-full sm:w-auto"
+                    variant="outline"
+                    size="lg"
+                    onClick={handleDownload}
+                  >
+                    <Download className="h-5 w-5 mr-2" />
+                    위촉/해촉 안내서 다운로드
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full sm:w-auto"
+                    variant="outline"
+                    size="lg"
+                    disabled
+                  >
+                    <AlertCircle className="h-5 w-5 mr-2" />
+                    안내서를 준비 중입니다
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

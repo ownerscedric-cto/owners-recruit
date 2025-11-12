@@ -2,12 +2,16 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
-  BarChart3,
-  Users,
-  FileText,
   Settings,
+  Users,
+  Calendar,
   Home,
-  Bell
+  Bell,
+  Shield,
+  Building,
+  FileText,
+  FormInput,
+  Eye
 } from 'lucide-react'
 
 interface AdminLayoutProps {
@@ -17,10 +21,13 @@ interface AdminLayoutProps {
 }
 
 const navigation = [
-  { name: '대시보드', href: '/admin/dashboard', icon: BarChart3, id: 'dashboard' },
-  { name: '지원자 관리', href: '/admin/applicants', icon: Users, id: 'applicants' },
-  { name: '보고서', href: '/admin/reports', icon: FileText, id: 'reports' },
-  { name: '시스템 설정', href: '/manager/settings', icon: Settings, id: 'settings' },
+  { name: '시스템 설정', href: '/admin/settings', icon: Settings, id: 'settings' },
+  { name: '팀 관리', href: '/admin/teams', icon: Building, id: 'teams' },
+  { name: '모집인 관리', href: '/admin/recruiters', icon: Users, id: 'recruiters' },
+  { name: '시험 일정 관리', href: '/admin/exam-schedules', icon: Calendar, id: 'exam-schedules' },
+  { name: '파일 관리', href: '/admin/files', icon: FileText, id: 'files' },
+  { name: '폼 설정 관리', href: '/admin/form-config', icon: FormInput, id: 'form-config' },
+  { name: '폼 미리보기', href: '/admin/form-preview', icon: Eye, id: 'form-preview' },
 ]
 
 export function AdminLayout({ children, title, currentPage }: AdminLayoutProps) {
@@ -39,7 +46,7 @@ export function AdminLayout({ children, title, currentPage }: AdminLayoutProps) 
               </Link>
               <div className="ml-6">
                 <h1 className="text-xl font-bold text-gray-900">
-                  오너스경영연구소 관리자
+                  오너스경영연구소 시스템 관리자
                 </h1>
               </div>
             </div>
@@ -48,7 +55,8 @@ export function AdminLayout({ children, title, currentPage }: AdminLayoutProps) 
                 <Bell className="h-4 w-4" />
               </Button>
               <div className="flex items-center">
-                <span className="text-sm text-gray-700">관리자</span>
+                <Shield className="h-4 w-4 mr-2 text-red-600" />
+                <span className="text-sm text-gray-700">시스템 관리자</span>
               </div>
             </div>
           </div>
@@ -70,13 +78,13 @@ export function AdminLayout({ children, title, currentPage }: AdminLayoutProps) 
                       href={item.href}
                       className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                         isActive
-                          ? 'bg-blue-100 text-blue-700'
+                          ? 'bg-red-100 text-red-700'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
                       <Icon
                         className={`mr-3 h-5 w-5 ${
-                          isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+                          isActive ? 'text-red-500' : 'text-gray-400 group-hover:text-gray-500'
                         }`}
                       />
                       {item.name}

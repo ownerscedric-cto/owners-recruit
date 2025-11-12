@@ -39,20 +39,24 @@ export function AddressSearch({
   const [detailAddress, setDetailAddress] = useState('')
   const [baseAddress, setBaseAddress] = useState('')
   const [zonecode, setZonecode] = useState('')
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    // value가 변경될 때 기본 주소와 상세 주소 분리
-    if (value) {
-      const parts = value.split(', ')
-      if (parts.length > 1) {
-        setBaseAddress(parts[0])
-        setDetailAddress(parts.slice(1).join(', '))
-      } else {
-        setBaseAddress(value)
-        setDetailAddress('')
-      }
+    // 외부에서 value가 변경될 때만 분리 로직 실행
+    if (value && !isInitialized) {
+      setIsInitialized(true)
+
+      // 기본적으로 전체를 기본주소로 설정
+      setBaseAddress(value)
+      setDetailAddress('')
+    } else if (!value) {
+      // value가 비어있으면 모두 초기화
+      setBaseAddress('')
+      setDetailAddress('')
+      setZonecode('')
+      setIsInitialized(false)
     }
-  }, [value])
+  }, [value, isInitialized])
 
   useEffect(() => {
     const script = document.createElement('script')
@@ -78,16 +82,16 @@ export function AddressSearch({
 
     new window.daum.Postcode({
       oncomplete: function(data: any) {
-        let fullAddress = data.address
-        let extraAddress = ''
+        // 도로명 주소와 지번 주소 중 선택
+        let fullAddress = data.addressType === 'R' ? data.roadAddress : data.jibunAddress
 
-        // 사용자가 선택한 주소 타입에 따라 해당 주소 값을 가져온다.
+        // 참고항목 추가 (건물명, 동/로 정보)
+        let extraAddress = ''
         if (data.addressType === 'R') {
-          // 도로명 주소인 경우
           if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
             extraAddress += data.bname
           }
-          if (data.buildingName !== '' && data.apartment === 'Y') {
+          if (data.buildingName !== '') {
             extraAddress += (extraAddress !== '' ? ', ' + data.buildingName : data.buildingName)
           }
           if (extraAddress !== '') {
@@ -98,6 +102,7 @@ export function AddressSearch({
         setBaseAddress(fullAddress)
         setZonecode(data.zonecode)
         setDetailAddress('')
+        setIsInitialized(true)
 
         // 기본 주소만 먼저 onChange로 전달
         onChange(fullAddress)

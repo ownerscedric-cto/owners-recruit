@@ -1,7 +1,13 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Shield, Clock, FileCheck } from 'lucide-react'
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Users, Shield, Clock, FileCheck } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -107,28 +113,46 @@ export default function HomePage() {
 
                 <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Link href="/applicant/guide">
-                    <Button size="lg" variant="secondary" className="w-full h-16">
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="w-full h-16"
+                    >
                       <div className="text-center">
                         <div className="font-semibold">입사 지원자</div>
-                        <div className="text-sm opacity-75">정보 입력 및 진행상황 확인</div>
+                        <div className="text-sm opacity-75">
+                          정보 입력 및 진행상황 확인
+                        </div>
                       </div>
                     </Button>
                   </Link>
 
-                  <Link href="/admin/dashboard">
-                    <Button size="lg" variant="secondary" className="w-full h-16">
+                  <Link href="/manager/dashboard">
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="w-full h-16"
+                    >
                       <div className="text-center">
                         <div className="font-semibold">인사팀</div>
-                        <div className="text-sm opacity-75">지원자 관리 및 승인</div>
+                        <div className="text-sm opacity-75">
+                          지원자 관리 및 승인
+                        </div>
                       </div>
                     </Button>
                   </Link>
 
-                  <Link href="/manager/settings">
-                    <Button size="lg" variant="secondary" className="w-full h-16">
+                  <Link href="/admin/settings">
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="w-full h-16"
+                    >
                       <div className="text-center">
-                        <div className="font-semibold">관리자</div>
-                        <div className="text-sm opacity-75">시스템 설정 및 관리</div>
+                        <div className="font-semibold">시스템 관리자</div>
+                        <div className="text-sm opacity-75">
+                          시스템 설정 및 관리
+                        </div>
                       </div>
                     </Button>
                   </Link>
@@ -143,10 +167,10 @@ export default function HomePage() {
       <footer className="bg-white">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-500">
-            <p>&copy; 2024 오너스경영연구소. All rights reserved.</p>
+            <p>&copy; 2025 오너스경영연구소. All rights reserved.</p>
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }

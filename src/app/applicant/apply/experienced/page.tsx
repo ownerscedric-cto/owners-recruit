@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createApplicant, checkDuplicateApplicant } from "@/lib/applicants";
+import { encryptResidentNumber } from "@/lib/encryption";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { Header } from "@/components/shared/header";
 import { AddressSearch } from "@/components/forms/address-search";
 import { BankSelect } from "@/components/forms/bank-select";
+import { RecruiterSelect } from "@/components/forms/recruiter-select";
 import { DocumentGuide } from "@/components/forms/document-guide";
 import { DocumentSummary } from "@/components/forms/document-summary";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -76,8 +80,24 @@ const steps = [
   { id: 6, name: "완료", icon: Check },
 ];
 
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'pending': return '대기';
+    case 'reviewing': return '검토중';
+    case 'approved': return '승인';
+    case 'rejected': return '반려';
+    case 'completed': return '완료';
+    default: return '알 수 없음';
+  }
+};
+
 export default function ExperiencedApplicantPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isDuplicateFound, setIsDuplicateFound] = useState(false);
+  const [duplicateData, setDuplicateData] = useState<{name: string, phone: string, status: string} | null>(null);
   const [formData, setFormData] = useState<ExperiencedApplicantFormData>({
     name: "",
     residentNumber: "",
@@ -97,8 +117,71 @@ export default function ExperiencedApplicantPage() {
 
   const progress = (currentStep / steps.length) * 100;
 
-  const handleNext = () => {
-    // 5단계(서류안내)에서 검증
+  const handleGoToStatus = () => {
+    if (duplicateData) {
+      const params = new URLSearchParams({
+        name: duplicateData.name,
+        phone: duplicateData.phone
+      });
+      router.push(`/applicant/status?${params.toString()}`);
+    }
+  };
+
+  const handleDuplicateCheck = async () => {
+    if (!formData.name || !formData.phone) {
+      return false;
+    }
+
+    try {
+      const result = await checkDuplicateApplicant(formData.name, formData.phone);
+      if (result.success) {
+        return result;
+      } else {
+        alert(result.error || '중복 확인 중 오류가 발생했습니다.');
+        return false;
+      }
+    } catch (error) {
+      alert('중복 확인 중 오류가 발생했습니다.');
+      return false;
+    }
+  };
+
+  const handleNext = async () => {
+    // 2단계에서 중복 체크 수행
+    if (currentStep === 2) {
+      // 기본 검증 먼저 수행
+      if (!formData.address) {
+        alert("주소를 입력해주세요.");
+        return;
+      }
+      if (!formData.phone || formData.phone.length < 13) {
+        alert("휴대폰 번호를 정확히 입력해주세요.");
+        return;
+      }
+      if (!formData.email || !formData.email.includes("@")) {
+        alert("올바른 이메일 주소를 입력해주세요.");
+        return;
+      }
+
+      // 중복 체크 수행
+      const duplicateResult = await handleDuplicateCheck();
+      if (!duplicateResult) {
+        return;
+      }
+
+      if (duplicateResult.isDuplicate) {
+        const existingApplicant = duplicateResult.applicant;
+        setDuplicateData({
+          name: formData.name,
+          phone: formData.phone,
+          status: getStatusText(existingApplicant?.status || '알 수 없음')
+        });
+        setIsDuplicateFound(true);
+        return;
+      }
+    }
+
+    // 5단계(서류안내)에서 검증 및 제출
     if (currentStep === 5) {
       if (!formData.documentsConfirmed) {
         alert("필수 서류를 확인했는지 체크해주세요.");
@@ -108,6 +191,54 @@ export default function ExperiencedApplicantPage() {
         alert("서류 준비 완료 예정일을 선택해주세요.");
         return;
       }
+
+      // 실제 지원자 데이터 제출
+      try {
+        setIsSubmitting(true);
+        setSubmitError(null);
+
+        // 주민번호에서 생년월일 추출
+        const residentNumber = formData.residentNumber;
+        const year = parseInt(residentNumber.substring(0, 2));
+        const month = residentNumber.substring(2, 4);
+        const day = residentNumber.substring(4, 6);
+        const fullYear = year >= 0 && year <= 30 ? 2000 + year : 1900 + year;
+        const birthDate = `${fullYear}-${month}-${day}`;
+
+        const applicantData = {
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          birth_date: birthDate,
+          resident_number: encryptResidentNumber(formData.residentNumber),
+          recruiter_name: formData.recruiterName,
+          bank_name: formData.bankName,
+          bank_account: formData.bankAccount,
+          final_school: formData.finalSchool,
+          life_insurance_pass_date: formData.lifeInsurancePassDate,
+          life_education_date: formData.lifeEducationDate,
+          documents_confirmed: formData.documentsConfirmed,
+          document_preparation_date: formData.documentPreparationDate,
+          applicant_type: 'experienced' as const,
+        };
+
+        const result = await createApplicant(applicantData);
+        if (!result.success) {
+          setSubmitError(result.error || "등록에 실패했습니다.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        console.log("경력자 지원자 등록 성공:", result.data);
+        setIsSubmitting(false);
+        setCurrentStep(currentStep + 1);
+      } catch (error) {
+        console.error("등록 중 오류:", error);
+        setSubmitError("등록 중 오류가 발생했습니다.");
+        setIsSubmitting(false);
+      }
+      return;
     }
 
     if (currentStep < steps.length) {
@@ -189,6 +320,71 @@ export default function ExperiencedApplicantPage() {
     );
   };
 
+  // 중복 신청자 발견 시 UI
+  if (isDuplicateFound && duplicateData) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header
+          title="입사 신청 확인"
+          showBackButton
+          backUrl="/applicant/apply"
+        />
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="border-amber-200 bg-amber-50">
+            <CardHeader>
+              <CardTitle className="flex items-center text-amber-700">
+                <AlertCircle className="mr-2 h-6 w-6" />
+                이미 신청하신 이력이 있습니다
+              </CardTitle>
+              <CardDescription className="text-amber-600">
+                동일한 이름과 연락처로 신청된 내역을 발견했습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-white p-4 rounded-lg border border-amber-200">
+                <h4 className="font-medium text-gray-900 mb-2">신청자 정보</h4>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p><span className="font-medium">이름:</span> {duplicateData.name}</p>
+                  <p><span className="font-medium">연락처:</span> {duplicateData.phone}</p>
+                  <p><span className="font-medium">현재 상태:</span>
+                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                      {duplicateData.status}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <strong>진행 상황을 확인하시겠습니까?</strong>
+                  <br />
+                  현재 신청 상태와 다음 단계를 확인할 수 있습니다.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={handleGoToStatus}
+                  className="flex-1"
+                >
+                  진행 상황 확인하기
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDuplicateFound(false)}
+                  className="flex-1"
+                >
+                  돌아가기
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
@@ -263,7 +459,9 @@ export default function ExperiencedApplicantPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">이름 *</Label>
+                    <Label htmlFor="name">
+                      이름 <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -274,7 +472,9 @@ export default function ExperiencedApplicantPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="residentNumber">주민등록번호 *</Label>
+                    <Label htmlFor="residentNumber">
+                      주민등록번호 <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="residentNumber"
                       value={formData.residentNumber}
@@ -291,17 +491,12 @@ export default function ExperiencedApplicantPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="recruiterName">도입자(모집자)명 *</Label>
-                    <Input
-                      id="recruiterName"
-                      value={formData.recruiterName}
-                      onChange={(e) =>
-                        handleInputChange("recruiterName", e.target.value)
-                      }
-                      placeholder="김모집"
-                    />
-                  </div>
+                  <RecruiterSelect
+                    value={formData.recruiterName}
+                    onChange={(value) => handleInputChange("recruiterName", value)}
+                    required={false}
+                    description="등록된 모집자 중에서 선택해주세요 (선택사항)"
+                  />
                   <BankSelect
                     label="은행명"
                     value={formData.bankName}
@@ -311,7 +506,9 @@ export default function ExperiencedApplicantPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="bankAccount">계좌번호 *</Label>
+                  <Label htmlFor="bankAccount">
+                    계좌번호 <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="bankAccount"
                     value={formData.bankAccount}
@@ -340,7 +537,9 @@ export default function ExperiencedApplicantPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="phone">휴대폰 번호 *</Label>
+                    <Label htmlFor="phone">
+                      휴대폰 번호 <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="phone"
                       value={formData.phone}
@@ -355,7 +554,9 @@ export default function ExperiencedApplicantPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">이메일 *</Label>
+                    <Label htmlFor="email">
+                      이메일 <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="email"
                       type="email"
@@ -367,6 +568,7 @@ export default function ExperiencedApplicantPage() {
                     />
                   </div>
                 </div>
+
               </div>
             )}
 
@@ -374,7 +576,9 @@ export default function ExperiencedApplicantPage() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
-                  <Label htmlFor="finalSchool">학력 (최종학교명) *</Label>
+                  <Label htmlFor="finalSchool">
+                    학력 (최종학교명) <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="finalSchool"
                     value={formData.finalSchool}
@@ -388,44 +592,38 @@ export default function ExperiencedApplicantPage() {
                   </p>
                 </div>
 
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-purple-700 mb-3 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-2" />
-                    보험 자격 정보
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="lifeInsurancePassDate">
-                        생명보험 합격일 *
-                      </Label>
-                      <DatePicker
-                        id="lifeInsurancePassDate"
-                        value={formData.lifeInsurancePassDate}
-                        onChange={(date) =>
-                          handleInputChange("lifeInsurancePassDate", date)
-                        }
-                        placeholder="생명보험 합격일 선택"
-                      />
-                      <p className="text-xs text-purple-600 mt-1">
-                        3년 이내 발급된 합격증만 유효
-                      </p>
-                    </div>
-                    <div>
-                      <Label htmlFor="lifeEducationDate">
-                        생명교육 이수일 *
-                      </Label>
-                      <DatePicker
-                        id="lifeEducationDate"
-                        value={formData.lifeEducationDate}
-                        onChange={(date) =>
-                          handleInputChange("lifeEducationDate", date)
-                        }
-                        placeholder="생명교육 이수일 선택"
-                      />
-                      <p className="text-xs text-purple-600 mt-1">
-                        보험연수원 수료증 기준
-                      </p>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="lifeInsurancePassDate">
+                      생명보험 합격일 <span className="text-red-500">*</span>
+                    </Label>
+                    <DatePicker
+                      id="lifeInsurancePassDate"
+                      value={formData.lifeInsurancePassDate}
+                      onChange={(date) =>
+                        handleInputChange("lifeInsurancePassDate", date)
+                      }
+                      placeholder="생명보험 합격일 선택"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      3년 이내 발급된 합격증만 유효
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="lifeEducationDate">
+                      생명교육 이수일 <span className="text-red-500">*</span>
+                    </Label>
+                    <DatePicker
+                      id="lifeEducationDate"
+                      value={formData.lifeEducationDate}
+                      onChange={(date) =>
+                        handleInputChange("lifeEducationDate", date)
+                      }
+                      placeholder="생명교육 이수일 선택"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      보험연수원 수료증 기준
+                    </p>
                   </div>
                 </div>
               </div>
@@ -484,7 +682,9 @@ export default function ExperiencedApplicantPage() {
                         <div className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <Label>보험회사명 *</Label>
+                              <Label>
+                                보험회사명 <span className="text-red-500">*</span>
+                              </Label>
                               <Input
                                 value={company.companyName}
                                 onChange={(e) =>
@@ -498,7 +698,9 @@ export default function ExperiencedApplicantPage() {
                               />
                             </div>
                             <div>
-                              <Label>직급/직책 *</Label>
+                              <Label>
+                                직급/직책 <span className="text-red-500">*</span>
+                              </Label>
                               <Input
                                 value={company.position}
                                 onChange={(e) =>
@@ -515,7 +717,9 @@ export default function ExperiencedApplicantPage() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <Label>입사일 *</Label>
+                              <Label>
+                                입사일 <span className="text-red-500">*</span>
+                              </Label>
                               <DatePicker
                                 value={company.startDate}
                                 onChange={(date) =>
@@ -525,7 +729,9 @@ export default function ExperiencedApplicantPage() {
                               />
                             </div>
                             <div>
-                              <Label>퇴사일 *</Label>
+                              <Label>
+                                퇴사일 <span className="text-red-500">*</span>
+                              </Label>
                               <DatePicker
                                 value={company.endDate}
                                 onChange={(date) =>
