@@ -334,6 +334,64 @@ export interface Database {
           updated_at?: string
         }
       }
+      admins: {
+        Row: {
+          id: string
+          username: string
+          email: string
+          password_hash: string
+          role: 'admin' | 'hr_manager' | 'system_admin'
+          active: boolean
+          last_login: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          username: string
+          email: string
+          password_hash: string
+          role?: 'admin' | 'hr_manager' | 'system_admin'
+          active?: boolean
+          last_login?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          username?: string
+          email?: string
+          password_hash?: string
+          role?: 'admin' | 'hr_manager' | 'system_admin'
+          active?: boolean
+          last_login?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      admin_sessions: {
+        Row: {
+          id: string
+          admin_id: string
+          session_token: string
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          admin_id: string
+          session_token: string
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          admin_id?: string
+          session_token?: string
+          expires_at?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -343,6 +401,7 @@ export interface Database {
     }
     Enums: {
       applicant_status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'completed'
+      admin_role: 'admin' | 'hr_manager' | 'system_admin'
     }
   }
 }

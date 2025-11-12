@@ -1,16 +1,19 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { useAdminAuth } from '@/hooks/use-admin-auth'
 import {
   BarChart3,
   Users,
   FileText,
   Settings,
   Home,
-  Bell,
   UserCheck,
   Building,
-  Calendar
+  Calendar,
+  LogOut,
+  User,
+  Shield
 } from 'lucide-react'
 
 interface ManagerLayoutProps {
@@ -29,6 +32,22 @@ const navigation = [
 ]
 
 export function ManagerLayout({ children, title, currentPage }: ManagerLayoutProps) {
+  const { admin, logout } = useAdminAuth()
+
+  const handleLogout = async () => {
+    if (confirm('정말 로그아웃 하시겠습니까?')) {
+      await logout()
+    }
+  }
+
+  const getRoleText = (role: string) => {
+    switch (role) {
+      case 'system_admin': return '시스템 관리자'
+      case 'hr_manager': return '인사팀 관리자'
+      default: return '관리자'
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Top Navigation */}
@@ -49,12 +68,22 @@ export function ManagerLayout({ children, title, currentPage }: ManagerLayoutPro
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center">
-                <span className="text-sm text-gray-700">인사팀</span>
-              </div>
+              {admin && (
+                <>
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 mr-2 text-blue-600" />
+                    <span className="text-sm text-gray-700">{admin.username}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Shield className="h-4 w-4 mr-2 text-orange-600" />
+                    <span className="text-sm text-gray-700">{getRoleText(admin.role)}</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    로그아웃
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
