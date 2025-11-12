@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,8 +14,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // @ts-ignore - Supabase 타입 정의 이슈로 인한 임시 우회
-    const { data: createdSchedules, error } = await supabase
+    const { data: createdSchedules, error } = await (supabase as any)
       .from('exam_schedules')
       .insert(schedules)
       .select()

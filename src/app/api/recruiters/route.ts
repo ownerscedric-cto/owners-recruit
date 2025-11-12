@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +9,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = createSupabaseServiceRoleClient()
 
-    let query = supabase
+    let query = (supabase as any)
       .from('recruiters')
       .select('*')
 
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // @ts-ignore - Supabase 타입 정의 이슈로 인한 임시 우회
-    const { data: recruiter, error } = await supabase
+    const { data: recruiter, error } = await (supabase as any)
       .from('recruiters')
       .insert([recruiterData])
       .select()

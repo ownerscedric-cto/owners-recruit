@@ -6,7 +6,7 @@ export type ExamApplicationInsert = Database['public']['Tables']['exam_applicati
 export type ExamApplicationUpdate = Database['public']['Tables']['exam_applications']['Update']
 
 export async function getExamApplicationsByApplicant(applicantId: string): Promise<ExamApplication[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('exam_applications')
     .select('*')
     .eq('applicant_id', applicantId)
@@ -21,7 +21,7 @@ export async function getExamApplicationsByApplicant(applicantId: string): Promi
 }
 
 export async function createExamApplication(application: ExamApplicationInsert): Promise<ExamApplication> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('exam_applications')
     .insert([application])
     .select()
@@ -39,7 +39,7 @@ export async function updateExamApplication(
   id: string,
   updates: ExamApplicationUpdate
 ): Promise<ExamApplication> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('exam_applications')
     .update(updates)
     .eq('id', id)
@@ -55,7 +55,7 @@ export async function updateExamApplication(
 }
 
 export async function deleteExamApplication(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('exam_applications')
     .delete()
     .eq('id', id)
@@ -67,7 +67,7 @@ export async function deleteExamApplication(id: string): Promise<void> {
 }
 
 export async function getAllExamApplications(): Promise<ExamApplication[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('exam_applications')
     .select(`
       *,

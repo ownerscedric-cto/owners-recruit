@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 폼 단계 순서 변경
 export async function POST(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // 트랜잭션처럼 동작하도록 순차적으로 업데이트
     const updatePromises = step_ids.map((stepId: string, index: number) =>
-      supabase
+      (supabase as any)
         .from('form_steps')
         .update({ step_order: index + 1 })
         .eq('id', stepId)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 특정 파일 정보 조회
 export async function GET(
@@ -12,11 +13,14 @@ export async function GET(
     debugLog.info('File GET request started', { fileId: id }, 'API/files')
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('downloadable_files')
       .select('*')
       .eq('id', id)
       .single()
+
+    // 타입 지정
+    const typedData = data as Database['public']['Tables']['downloadable_files']['Row'] | null
 
     if (error) {
       debugLog.error('Database error fetching file', error, 'API/files')
@@ -27,17 +31,17 @@ export async function GET(
       }, { status: 500 })
     }
 
-    if (!data) {
+    if (!typedData) {
       return NextResponse.json({
         success: false,
         error: '파일을 찾을 수 없습니다.'
       }, { status: 404 })
     }
 
-    debugLog.info('File retrieved successfully', { fileId: id, title: data.title }, 'API/files')
+    debugLog.info('File retrieved successfully', { fileId: id, title: typedData.title }, 'API/files')
     return NextResponse.json({
       success: true,
-      data
+      data: typedData
     })
   } catch (error) {
     debugLog.error('Unexpected error in file GET', error, 'API/files')
@@ -62,13 +66,15 @@ export async function PATCH(
     const supabase = createSupabaseServiceRoleClient()
 
     // 파일 존재 확인
-    const { data: existingFile, error: fetchError } = await supabase
+    const { data: existingFile, error: fetchError } = await (supabase as any)
       .from('downloadable_files')
       .select('*')
       .eq('id', id)
       .single()
 
-    if (fetchError || !existingFile) {
+    const typedExistingFile = existingFile as Database['public']['Tables']['downloadable_files']['Row'] | null
+
+    if (fetchError || !typedExistingFile) {
       return NextResponse.json({
         success: false,
         error: '파일을 찾을 수 없습니다.'
@@ -83,12 +89,14 @@ export async function PATCH(
     if (data.active !== undefined) updateData.active = data.active
 
     // 파일 정보 업데이트
-    const { data: updatedFile, error } = await supabase
+    const { data: updatedFile, error } = await (supabase as any)
       .from('downloadable_files')
       .update(updateData)
       .eq('id', id)
       .select()
       .single()
+
+    const typedUpdatedFile = updatedFile as Database['public']['Tables']['downloadable_files']['Row'] | null
 
     if (error) {
       debugLog.error('Database error updating file', error, 'API/files')
@@ -99,10 +107,10 @@ export async function PATCH(
       }, { status: 500 })
     }
 
-    debugLog.info('File updated successfully', { fileId: id, title: updatedFile.title }, 'API/files')
+    debugLog.info('File updated successfully', { fileId: id, title: typedUpdatedFile?.title }, 'API/files')
     return NextResponse.json({
       success: true,
-      data: updatedFile
+      data: typedUpdatedFile
     })
   } catch (error) {
     debugLog.error('Unexpected error in file update', error, 'API/files')
@@ -126,13 +134,15 @@ export async function DELETE(
     const supabase = createSupabaseServiceRoleClient()
 
     // 파일 존재 확인
-    const { data: existingFile, error: fetchError } = await supabase
+    const { data: existingFile, error: fetchError } = await (supabase as any)
       .from('downloadable_files')
       .select('*')
       .eq('id', id)
       .single()
 
-    if (fetchError || !existingFile) {
+    const typedExistingFile = existingFile as Database['public']['Tables']['downloadable_files']['Row'] | null
+
+    if (fetchError || !typedExistingFile) {
       return NextResponse.json({
         success: false,
         error: '파일을 찾을 수 없습니다.'
@@ -140,7 +150,7 @@ export async function DELETE(
     }
 
     // 파일 삭제
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('downloadable_files')
       .delete()
       .eq('id', id)
@@ -154,7 +164,7 @@ export async function DELETE(
       }, { status: 500 })
     }
 
-    debugLog.info('File deleted successfully', { fileId: id, title: existingFile.title }, 'API/files')
+    debugLog.info('File deleted successfully', { fileId: id, title: typedExistingFile.title }, 'API/files')
     return NextResponse.json({
       success: true,
       message: '파일이 성공적으로 삭제되었습니다.'

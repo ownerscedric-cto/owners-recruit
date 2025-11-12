@@ -175,7 +175,7 @@ export function FormStepManager({ className }: FormStepManagerProps) {
 
   const handleAssignField = async (fieldId: string, stepId: string | null) => {
     try {
-      const result = await updateFormField(fieldId, { step_id: stepId })
+      const result = await updateFormField(fieldId, { step_id: stepId ?? undefined })
       if (result.success) {
         await loadFields()
       } else {

@@ -29,7 +29,11 @@ export function DatePicker({
     // 숨겨진 date input을 클릭하여 캘린더 열기
     const dateInput = document.getElementById(`${id}-hidden`) as HTMLInputElement;
     if (dateInput) {
-      dateInput.showPicker?.() || dateInput.focus();
+      if (dateInput.showPicker) {
+        dateInput.showPicker();
+      } else {
+        dateInput.focus();
+      }
     }
   };
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
 
 export async function PATCH(
   request: NextRequest,
@@ -11,7 +12,7 @@ export async function PATCH(
     const supabase = createSupabaseServiceRoleClient()
 
     // @ts-ignore - Supabase 타입 정의 이슈로 인한 임시 우회
-    const { data: recruiter, error } = await supabase
+    const { data: recruiter, error } = await (supabase as any)
       .from('recruiters')
       .update(data)
       .eq('id', id)
@@ -48,7 +49,7 @@ export async function DELETE(
     const supabase = createSupabaseServiceRoleClient()
 
     // 먼저 이 모집인과 연결된 지원자가 있는지 확인
-    const { data: applicants, error: checkError } = await supabase
+    const { data: applicants, error: checkError } = await (supabase as any)
       .from('applicants')
       .select('id')
       .eq('recruiter_id', id)
@@ -68,7 +69,7 @@ export async function DELETE(
       }, { status: 400 })
     }
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('recruiters')
       .delete()
       .eq('id', id)

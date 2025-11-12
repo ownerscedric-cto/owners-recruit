@@ -51,7 +51,7 @@ const LOCATION_GROUPS = {
       if (showUpcoming) {
         const today = new Date().toISOString().split('T')[0]
         filteredSchedules = filteredSchedules.filter((schedule: ExamSchedule) =>
-          schedule.exam_date >= today
+          schedule.exam_date && schedule.exam_date >= today
         )
       }
 

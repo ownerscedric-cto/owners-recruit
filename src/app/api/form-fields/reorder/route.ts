@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 폼 필드 순서 변경
 export async function POST(request: NextRequest) {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     // 각 필드의 display_order 업데이트
     const updatePromises = updates.map(({ id, display_order }) =>
-      supabase
+      (supabase as any)
         .from('form_fields')
         .update({ display_order })
         .eq('id', id)

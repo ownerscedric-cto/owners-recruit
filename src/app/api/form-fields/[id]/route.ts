@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 특정 폼 필드 정보 조회
 export async function GET(
@@ -12,11 +13,13 @@ export async function GET(
     debugLog.info('Form field GET request started', { fieldId: id }, 'API/form-fields')
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('form_fields')
       .select('*')
       .eq('id', id)
       .single()
+
+    const typedData = data as Database['public']['Tables']['form_fields']['Row'] | null
 
     if (error) {
       debugLog.error('Database error fetching form field', error, 'API/form-fields')
@@ -27,17 +30,17 @@ export async function GET(
       }, { status: 500 })
     }
 
-    if (!data) {
+    if (!typedData) {
       return NextResponse.json({
         success: false,
         error: '폼 필드를 찾을 수 없습니다.'
       }, { status: 404 })
     }
 
-    debugLog.info('Form field retrieved successfully', { fieldId: id, fieldName: data.field_name }, 'API/form-fields')
+    debugLog.info('Form field retrieved successfully', { fieldId: id, fieldName: typedData.field_name }, 'API/form-fields')
     return NextResponse.json({
       success: true,
-      data
+      data: typedData
     })
   } catch (error) {
     debugLog.error('Unexpected error in form field GET', error, 'API/form-fields')
@@ -62,13 +65,15 @@ export async function PATCH(
     const supabase = createSupabaseServiceRoleClient()
 
     // 폼 필드 존재 확인
-    const { data: existingField, error: fetchError } = await supabase
+    const { data: existingField, error: fetchError } = await (supabase as any)
       .from('form_fields')
       .select('*')
       .eq('id', id)
       .single()
 
-    if (fetchError || !existingField) {
+    const typedExistingField = existingField as Database['public']['Tables']['form_fields']['Row'] | null
+
+    if (fetchError || !typedExistingField) {
       return NextResponse.json({
         success: false,
         error: '폼 필드를 찾을 수 없습니다.'
@@ -76,8 +81,8 @@ export async function PATCH(
     }
 
     // 필드명이 변경되는 경우 중복 검사
-    if (data.field_name && data.field_name !== existingField.field_name) {
-      const { data: duplicateField, error: checkError } = await supabase
+    if (data.field_name && data.field_name !== typedExistingField.field_name) {
+      const { data: duplicateField, error: checkError } = await (supabase as any)
         .from('form_fields')
         .select('id')
         .eq('field_name', data.field_name)
@@ -116,12 +121,14 @@ export async function PATCH(
     if (data.step_id !== undefined) updateData.step_id = data.step_id
 
     // 폼 필드 정보 업데이트
-    const { data: updatedField, error } = await supabase
+    const { data: updatedField, error } = await (supabase as any)
       .from('form_fields')
       .update(updateData)
       .eq('id', id)
       .select()
       .single()
+
+    const typedUpdatedField = updatedField as Database['public']['Tables']['form_fields']['Row'] | null
 
     if (error) {
       debugLog.error('Database error updating form field', error, 'API/form-fields')
@@ -132,10 +139,10 @@ export async function PATCH(
       }, { status: 500 })
     }
 
-    debugLog.info('Form field updated successfully', { fieldId: id, fieldName: updatedField.field_name }, 'API/form-fields')
+    debugLog.info('Form field updated successfully', { fieldId: id, fieldName: typedUpdatedField?.field_name }, 'API/form-fields')
     return NextResponse.json({
       success: true,
-      data: updatedField
+      data: typedUpdatedField
     })
   } catch (error) {
     debugLog.error('Unexpected error in form field update', error, 'API/form-fields')
@@ -159,13 +166,15 @@ export async function DELETE(
     const supabase = createSupabaseServiceRoleClient()
 
     // 폼 필드 존재 확인
-    const { data: existingField, error: fetchError } = await supabase
+    const { data: existingField, error: fetchError } = await (supabase as any)
       .from('form_fields')
       .select('*')
       .eq('id', id)
       .single()
 
-    if (fetchError || !existingField) {
+    const typedExistingFieldForDelete = existingField as Database['public']['Tables']['form_fields']['Row'] | null
+
+    if (fetchError || !typedExistingFieldForDelete) {
       return NextResponse.json({
         success: false,
         error: '폼 필드를 찾을 수 없습니다.'
@@ -173,7 +182,7 @@ export async function DELETE(
     }
 
     // 폼 필드 삭제
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('form_fields')
       .delete()
       .eq('id', id)
@@ -187,7 +196,7 @@ export async function DELETE(
       }, { status: 500 })
     }
 
-    debugLog.info('Form field deleted successfully', { fieldId: id, fieldName: existingField.field_name }, 'API/form-fields')
+    debugLog.info('Form field deleted successfully', { fieldId: id, fieldName: typedExistingFieldForDelete.field_name }, 'API/form-fields')
     return NextResponse.json({
       success: true,
       message: '폼 필드가 성공적으로 삭제되었습니다.'

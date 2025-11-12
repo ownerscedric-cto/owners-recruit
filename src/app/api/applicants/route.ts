@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
+
+type ApplicantRow = Database['public']['Tables']['applicants']['Row']
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,9 +33,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ API: Applicant created successfully:', {
-      id: applicant.id,
-      name: applicant.name,
-      email: applicant.email
+      id: (applicant as ApplicantRow).id,
+      name: (applicant as ApplicantRow).name,
+      email: (applicant as ApplicantRow).email
     })
 
     return NextResponse.json({

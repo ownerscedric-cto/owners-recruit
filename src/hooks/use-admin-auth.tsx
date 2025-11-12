@@ -2,13 +2,9 @@
 
 import { useState, useEffect, useContext, createContext, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { Database } from '@/types/database'
 
-interface AdminUser {
-  id: string
-  username: string
-  email: string
-  role: string
-}
+type AdminUser = Database['public']['Tables']['admins']['Row']
 
 interface AdminAuthContextType {
   admin: AdminUser | null

@@ -57,39 +57,41 @@ export async function authenticateAdmin(username: string, password: string): Pro
     const supabase = createSupabaseServiceRoleClient()
 
     // 관리자 계정 조회
-    const { data: admin, error: adminError } = await supabase
+    const { data: admin, error: adminError } = await (supabase as any)
       .from('admins')
       .select('*')
       .eq('username', username)
       .eq('active', true)
       .single()
 
-    if (adminError || !admin) {
+    const typedAdmin = admin as AdminUser | null
+
+    if (adminError || !typedAdmin) {
       return { success: false, error: '사용자를 찾을 수 없습니다.' }
     }
 
     // 비밀번호 확인
-    const isValidPassword = await comparePassword(password, admin.password_hash)
+    const isValidPassword = await comparePassword(password, typedAdmin.password_hash)
     if (!isValidPassword) {
       return { success: false, error: '비밀번호가 일치하지 않습니다.' }
     }
 
     // 세션 토큰 생성
-    const sessionToken = generateSessionToken(admin.id)
+    const sessionToken = generateSessionToken(typedAdmin.id)
     const expiresAt = new Date(Date.now() + SESSION_EXPIRES_IN).toISOString()
 
     // 기존 세션 정리 (만료된 세션 제거)
-    await supabase
+    await (supabase as any)
       .from('admin_sessions')
       .delete()
-      .eq('admin_id', admin.id)
+      .eq('admin_id', typedAdmin.id)
       .lt('expires_at', new Date().toISOString())
 
     // 새 세션 생성
-    const { error: sessionError } = await supabase
+    const { error: sessionError } = await (supabase as any)
       .from('admin_sessions')
       .insert({
-        admin_id: admin.id,
+        admin_id: typedAdmin.id,
         session_token: sessionToken,
         expires_at: expiresAt
       })
@@ -100,14 +102,14 @@ export async function authenticateAdmin(username: string, password: string): Pro
     }
 
     // 마지막 로그인 시간 업데이트
-    await supabase
+    await (supabase as any)
       .from('admins')
       .update({ last_login: new Date().toISOString() })
-      .eq('id', admin.id)
+      .eq('id', typedAdmin.id)
 
     return {
       success: true,
-      admin,
+      admin: typedAdmin,
       token: sessionToken
     }
   } catch (error) {
@@ -125,7 +127,7 @@ export async function validateAdminSession(token: string): Promise<AdminUser | n
     if (!decoded) return null
 
     // 세션 확인
-    const { data: session, error: sessionError } = await supabase
+    const { data: session, error: sessionError } = await (supabase as any)
       .from('admin_sessions')
       .select('*, admins(*)')
       .eq('session_token', token)
@@ -148,7 +150,7 @@ export async function logoutAdmin(token: string): Promise<boolean> {
   try {
     const supabase = createSupabaseServiceRoleClient()
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('admin_sessions')
       .delete()
       .eq('session_token', token)
@@ -164,7 +166,7 @@ export async function cleanupExpiredSessions(): Promise<void> {
   try {
     const supabase = createSupabaseServiceRoleClient()
 
-    await supabase
+    await (supabase as any)
       .from('admin_sessions')
       .delete()
       .lt('expires_at', new Date().toISOString())

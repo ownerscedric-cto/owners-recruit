@@ -3,6 +3,7 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import { Database } from '@/types/database'
 
 // 파일 업로드
 export async function POST(request: NextRequest) {
@@ -99,11 +100,13 @@ export async function POST(request: NextRequest) {
       active: active !== undefined ? active : true
     }
 
-    const { data: newFile, error } = await supabase
+    const { data: newFile, error } = await (supabase as any)
       .from('downloadable_files')
       .insert(fileData)
       .select()
       .single()
+
+    const typedNewFile = newFile as Database['public']['Tables']['downloadable_files']['Row'] | null
 
     if (error) {
       debugLog.error('Database error saving file info', error, 'API/files/upload')
@@ -115,14 +118,14 @@ export async function POST(request: NextRequest) {
     }
 
     debugLog.info('File uploaded successfully', {
-      fileId: newFile.id,
-      title: newFile.title,
+      fileId: typedNewFile?.id,
+      title: typedNewFile?.title,
       size: file.size
     }, 'API/files/upload')
 
     return NextResponse.json({
       success: true,
-      data: newFile
+      data: typedNewFile
     }, { status: 201 })
 
   } catch (error) {

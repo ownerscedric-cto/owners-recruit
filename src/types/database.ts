@@ -392,6 +392,112 @@ export interface Database {
           created_at?: string
         }
       }
+      exam_schedules: {
+        Row: {
+          id: string
+          year: number
+          exam_type: string
+          session_number: number
+          registration_start_date: string | null
+          registration_end_date: string | null
+          exam_date: string
+          exam_time_start: string
+          exam_time_end: string
+          locations: string[]
+          notes: string | null
+          created_at: string
+          updated_at: string
+          session_range: string | null
+          internal_deadline_date: string | null
+          internal_deadline_time: string | null
+          notice_date: string | null
+          notice_time: string | null
+          has_internal_deadline: boolean
+          data_source: string | null
+          combined_notes: string | null
+        }
+        Insert: {
+          id?: string
+          year?: number
+          exam_type?: string
+          session_number?: number
+          registration_start_date?: string | null
+          registration_end_date?: string | null
+          exam_date?: string
+          exam_time_start?: string
+          exam_time_end?: string
+          locations?: string[]
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          session_range?: string | null
+          internal_deadline_date?: string | null
+          internal_deadline_time?: string | null
+          notice_date?: string | null
+          notice_time?: string | null
+          has_internal_deadline?: boolean
+          data_source?: string | null
+          combined_notes?: string | null
+        }
+        Update: {
+          id?: string
+          year?: number
+          exam_type?: string
+          session_number?: number
+          registration_start_date?: string | null
+          registration_end_date?: string | null
+          exam_date?: string
+          exam_time_start?: string
+          exam_time_end?: string
+          locations?: string[]
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          session_range?: string | null
+          internal_deadline_date?: string | null
+          internal_deadline_time?: string | null
+          notice_date?: string | null
+          notice_time?: string | null
+          has_internal_deadline?: boolean
+          data_source?: string | null
+          combined_notes?: string | null
+        }
+      }
+      system_settings: {
+        Row: {
+          id: string
+          category: string
+          key: string
+          value: string
+          data_type: string
+          description: string | null
+          is_encrypted: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          category: string
+          key: string
+          value: string
+          data_type?: string
+          description?: string | null
+          is_encrypted?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          category?: string
+          key?: string
+          value?: string
+          data_type?: string
+          description?: string | null
+          is_encrypted?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

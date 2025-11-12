@@ -15,7 +15,7 @@ export async function getSystemSetting(key: string): Promise<string | null> {
   try {
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('system_settings')
       .select('value')
       .eq('key', key)

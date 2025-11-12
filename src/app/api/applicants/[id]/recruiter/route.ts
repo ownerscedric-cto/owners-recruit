@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
 
 export async function PATCH(
   request: NextRequest,

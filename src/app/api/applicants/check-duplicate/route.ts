@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
+
+type ApplicantRow = Database['public']['Tables']['applicants']['Row']
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,10 +36,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 전화번호가 일치하는 지원자 찾기
-    const duplicateApplicant = existingApplicants?.find((applicant: any) => {
+    const duplicateApplicant = existingApplicants?.find((applicant: ApplicantRow) => {
       const cleanApplicantPhone = applicant.phone?.replace(/[^0-9]/g, '') || ''
       return cleanApplicantPhone === cleanPhone
-    })
+    }) as ApplicantRow | undefined
 
     if (duplicateApplicant) {
       return NextResponse.json({

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 파일 목록 조회
 export async function GET(request: NextRequest) {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
     debugLog.info('Downloadable files GET request started', { activeOnly, category }, 'API/files')
     const supabase = createSupabaseServiceRoleClient()
 
-    let query = supabase
+    let query = (supabase as any)
       .from('downloadable_files')
       .select('*')
 
@@ -80,11 +81,13 @@ export async function POST(request: NextRequest) {
       active: data.active !== undefined ? data.active : true
     }
 
-    const { data: newFile, error } = await supabase
+    const { data: newFile, error } = await (supabase as any)
       .from('downloadable_files')
       .insert(fileData)
       .select()
       .single()
+
+    const typedNewFile = newFile as Database['public']['Tables']['downloadable_files']['Row'] | null
 
     if (error) {
       debugLog.error('Database error creating file', error, 'API/files')
@@ -95,10 +98,10 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    debugLog.info('File created successfully', { fileId: newFile.id, title: newFile.title }, 'API/files')
+    debugLog.info('File created successfully', { fileId: typedNewFile?.id, title: typedNewFile?.title }, 'API/files')
     return NextResponse.json({
       success: true,
-      data: newFile
+      data: typedNewFile
     }, { status: 201 })
   } catch (error) {
     debugLog.error('Unexpected error in file creation', error, 'API/files')

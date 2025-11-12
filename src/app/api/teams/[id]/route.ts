@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 특정 팀 조회
 export async function GET(
@@ -12,7 +13,7 @@ export async function GET(
     debugLog.info('Team GET request started', { teamId: id }, 'API/teams')
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('teams')
       .select('*')
       .eq('id', id)
@@ -62,7 +63,7 @@ export async function PATCH(
     const supabase = createSupabaseServiceRoleClient()
 
     // 팀 존재 확인
-    const { data: existingTeam, error: fetchError } = await supabase
+    const { data: existingTeam, error: fetchError } = await (supabase as any)
       .from('teams')
       .select('*')
       .eq('id', id)
@@ -77,7 +78,7 @@ export async function PATCH(
 
     // 팀명 중복 검사 (다른 팀에서)
     if (data.name && data.name !== existingTeam.name) {
-      const { data: duplicateTeam } = await supabase
+      const { data: duplicateTeam } = await (supabase as any)
         .from('teams')
         .select('id')
         .eq('name', data.name.trim())
@@ -98,7 +99,7 @@ export async function PATCH(
     if (data.description !== undefined) updateData.description = data.description?.trim() || null
 
     // 팀 정보 업데이트
-    const { data: updatedTeam, error } = await supabase
+    const { data: updatedTeam, error } = await (supabase as any)
       .from('teams')
       .update(updateData)
       .eq('id', id)
@@ -141,7 +142,7 @@ export async function DELETE(
     const supabase = createSupabaseServiceRoleClient()
 
     // 팀 존재 확인
-    const { data: existingTeam, error: fetchError } = await supabase
+    const { data: existingTeam, error: fetchError } = await (supabase as any)
       .from('teams')
       .select('*')
       .eq('id', id)
@@ -155,7 +156,7 @@ export async function DELETE(
     }
 
     // 팀을 사용하고 있는 모집인이 있는지 확인
-    const { data: recruitersUsingTeam, error: recruitersError } = await supabase
+    const { data: recruitersUsingTeam, error: recruitersError } = await (supabase as any)
       .from('recruiters')
       .select('id, name')
       .eq('team', existingTeam.name)
@@ -176,7 +177,7 @@ export async function DELETE(
     }
 
     // 팀 삭제
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('teams')
       .delete()
       .eq('id', id)

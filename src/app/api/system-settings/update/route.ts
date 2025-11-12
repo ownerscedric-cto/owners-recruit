@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
 import { stringifySettingValue } from '@/lib/system-settings'
 
 // 개별 설정 업데이트
@@ -18,7 +19,7 @@ export async function PUT(request: NextRequest) {
     const stringValue = stringifySettingValue(value)
 
     // @ts-ignore - Supabase 타입 정의 이슈로 인한 임시 우회
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('system_settings')
       .update({
         value: stringValue,

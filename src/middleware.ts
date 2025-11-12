@@ -71,7 +71,7 @@ function isStaticFile(pathname: string): boolean {
 function isAdminAccess(request: NextRequest): boolean {
   const forwardedFor = request.headers.get('x-forwarded-for')
   const realIP = request.headers.get('x-real-ip')
-  const ip = forwardedFor?.split(',')[0] || realIP || request.ip || ''
+  const ip = forwardedFor?.split(',')[0] || realIP || ''
 
   const adminIPs = [
     '127.0.0.1',
@@ -103,7 +103,7 @@ async function isMaintenanceMode(): Promise<boolean> {
   try {
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('system_settings')
       .select('value')
       .eq('key', 'maintenance_mode')

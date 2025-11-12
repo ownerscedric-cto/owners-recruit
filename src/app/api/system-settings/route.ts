@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { parseSettingValue, stringifySettingValue } from '@/lib/system-settings'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 import { invalidateSettingsCache } from '@/lib/settings-cache'
 
 // 모든 시스템 설정 조회
@@ -10,11 +11,13 @@ export async function GET() {
     debugLog.info('System settings GET request started', null, 'API/settings')
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('system_settings')
       .select('*')
       .order('category', { ascending: true })
       .order('key', { ascending: true })
+
+    const typedData = data as Database['public']['Tables']['system_settings']['Row'][] | null
 
     if (error) {
       debugLog.error('Database error fetching system settings', error, 'API/settings')
@@ -27,7 +30,7 @@ export async function GET() {
 
     // 설정을 구조화된 객체로 변환
     const settings: any = {}
-    data.forEach((setting) => {
+    typedData?.forEach((setting) => {
       const value = parseSettingValue(setting.value, setting.data_type)
 
       // 카테고리별로 그룹화하지 않고 flat한 구조로 변환
@@ -60,7 +63,7 @@ export async function PUT(request: NextRequest) {
     // 각 설정을 개별적으로 업데이트
     const updatePromises = Object.entries(settings).map(async ([key, value]) => {
       // 기존 설정 정보 조회
-      const { data: existingSetting, error: fetchError } = await supabase
+      const { data: existingSetting, error: fetchError } = await (supabase as any)
         .from('system_settings')
         .select('data_type')
         .eq('key', key)
@@ -74,7 +77,7 @@ export async function PUT(request: NextRequest) {
       const stringValue = stringifySettingValue(value)
 
       // 설정 업데이트
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('system_settings')
         .update({
           value: stringValue,

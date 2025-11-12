@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 폼 단계 수정
 export async function PATCH(
@@ -15,7 +16,7 @@ export async function PATCH(
     const supabase = createSupabaseServiceRoleClient()
 
     // 단계 존재 확인
-    const { data: existingStep, error: checkError } = await supabase
+    const { data: existingStep, error: checkError } = await (supabase as any)
       .from('form_steps')
       .select('*')
       .eq('id', id)
@@ -46,7 +47,7 @@ export async function PATCH(
       }, { status: 400 })
     }
 
-    const { data: updatedStep, error } = await supabase
+    const { data: updatedStep, error } = await (supabase as any)
       .from('form_steps')
       .update(updateData)
       .eq('id', id)
@@ -89,7 +90,7 @@ export async function DELETE(
     const supabase = createSupabaseServiceRoleClient()
 
     // 단계 존재 확인
-    const { data: existingStep, error: checkError } = await supabase
+    const { data: existingStep, error: checkError } = await (supabase as any)
       .from('form_steps')
       .select('*')
       .eq('id', id)
@@ -103,7 +104,7 @@ export async function DELETE(
     }
 
     // 이 단계에 할당된 필드들의 step_id를 null로 설정
-    const { error: updateFieldsError } = await supabase
+    const { error: updateFieldsError } = await (supabase as any)
       .from('form_fields')
       .update({ step_id: null })
       .eq('step_id', id)
@@ -114,7 +115,7 @@ export async function DELETE(
     }
 
     // 단계 삭제
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('form_steps')
       .delete()
       .eq('id', id)

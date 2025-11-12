@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
 
 // 카테고리별 설정 조회
 export async function GET(
@@ -10,7 +11,7 @@ export async function GET(
     const { category } = await params
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('system_settings')
       .select('*')
       .eq('category', category)

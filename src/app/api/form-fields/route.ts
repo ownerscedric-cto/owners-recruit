@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 폼 필드 목록 조회
 export async function GET(request: NextRequest) {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
     debugLog.info('Form fields GET request started', { visibleOnly, formType }, 'API/form-fields')
     const supabase = createSupabaseServiceRoleClient()
 
-    let query = supabase
+    let query = (supabase as any)
       .from('form_fields')
       .select('*')
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     const supabase = createSupabaseServiceRoleClient()
 
     // 필드명 중복 검사
-    const { data: existingField, error: checkError } = await supabase
+    const { data: existingField, error: checkError } = await (supabase as any)
       .from('form_fields')
       .select('id')
       .eq('field_name', data.field_name)
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // display_order가 없으면 마지막 순서로 설정
     if (data.display_order === undefined) {
-      const { data: maxOrderData } = await supabase
+      const { data: maxOrderData } = await (supabase as any)
         .from('form_fields')
         .select('display_order')
         .order('display_order', { ascending: false })
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
       step_id: data.step_id || null
     }
 
-    const { data: newField, error } = await supabase
+    const { data: newField, error } = await (supabase as any)
       .from('form_fields')
       .insert(fieldData)
       .select()

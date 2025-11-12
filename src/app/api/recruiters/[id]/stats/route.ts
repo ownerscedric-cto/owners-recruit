@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +10,7 @@ export async function GET(
     const { id } = await params
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('applicants')
       .select('status')
       .eq('recruiter_id', id)

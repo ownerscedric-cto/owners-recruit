@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 폼 단계 목록 조회
 export async function GET(request: NextRequest) {
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
     debugLog.info('Form steps GET request started', { formType }, 'API/form-steps')
     const supabase = createSupabaseServiceRoleClient()
 
-    let query = supabase
+    let query = (supabase as any)
       .from('form_steps')
       .select('*')
       .eq('is_active', true)
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // step_order가 없으면 마지막 순서로 설정
     if (data.step_order === undefined) {
-      const { data: maxOrderData } = await supabase
+      const { data: maxOrderData } = await (supabase as any)
         .from('form_steps')
         .select('step_order')
         .eq('form_type', data.form_type)
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       is_active: data.is_active !== undefined ? data.is_active : true
     }
 
-    const { data: newStep, error } = await supabase
+    const { data: newStep, error } = await (supabase as any)
       .from('form_steps')
       .insert(stepData)
       .select()

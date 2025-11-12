@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
+
+type ExamScheduleUpdate = Database['public']['Tables']['exam_schedules']['Update']
 
 export async function PATCH(
   request: NextRequest,
@@ -7,13 +10,12 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const data = await request.json()
+    const updateData: ExamScheduleUpdate = await request.json()
     const supabase = createSupabaseServiceRoleClient()
 
-    // @ts-ignore - Supabase 타입 정의 이슈로 인한 임시 우회
-    const { data: schedule, error } = await supabase
+    const { data: schedule, error } = await (supabase as any)
       .from('exam_schedules')
-      .update(data)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()
@@ -47,7 +49,7 @@ export async function DELETE(
     const { id } = await params
     const supabase = createSupabaseServiceRoleClient()
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('exam_schedules')
       .delete()
       .eq('id', id)

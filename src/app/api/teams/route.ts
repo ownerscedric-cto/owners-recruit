@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { debugLog } from '@/lib/debug'
+import { Database } from '@/types/database'
 
 // 팀 목록 조회
 export async function GET() {
@@ -8,7 +9,7 @@ export async function GET() {
     debugLog.info('Teams GET request started', null, 'API/teams')
     const supabase = createSupabaseServiceRoleClient()
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('teams')
       .select('*')
       .order('name', { ascending: true })
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     const supabase = createSupabaseServiceRoleClient()
 
     // 중복 팀명 검사
-    const { data: existingTeam } = await supabase
+    const { data: existingTeam } = await (supabase as any)
       .from('teams')
       .select('id')
       .eq('name', data.name.trim())
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 팀 생성
-    const { data: newTeam, error } = await supabase
+    const { data: newTeam, error } = await (supabase as any)
       .from('teams')
       .insert({
         name: data.name.trim(),
