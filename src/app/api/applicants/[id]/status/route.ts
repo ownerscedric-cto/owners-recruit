@@ -3,6 +3,7 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
 
 type ApplicantRow = Database['public']['Tables']['applicants']['Row']
+type ApplicantUpdate = Database['public']['Tables']['applicants']['Update']
 
 export async function PATCH(
   request: NextRequest,
@@ -47,9 +48,10 @@ export async function PATCH(
     })
 
     // 업데이트 수행
+    const updateData: ApplicantUpdate = { status }
     const updateResult = await supabaseService
       .from('applicants')
-      .update({ status } as any)
+      .update(updateData)
       .eq('id', id)
       .select()
 
