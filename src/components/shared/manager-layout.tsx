@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAdminAuth } from '@/hooks/use-admin-auth'
@@ -61,9 +62,17 @@ export function ManagerLayout({ children, title, currentPage }: ManagerLayoutPro
                   홈
                 </Button>
               </Link>
-              <div className="ml-6">
+              <div className="ml-6 flex items-center">
+                <Image
+                  src="/owners_logo.png"
+                  alt="오너스경영연구소 로고"
+                  width={120}
+                  height={40}
+                  className="h-10 w-auto mr-3"
+                  priority
+                />
                 <h1 className="text-xl font-bold text-gray-900">
-                  오너스경영연구소 인사팀
+                  인사팀
                 </h1>
               </div>
             </div>

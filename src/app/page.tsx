@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,12 +18,22 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                오너스경영연구소
-              </h1>
-              <span className="ml-3 text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                스마트 리크루팅 시스템
-              </span>
+              <Image
+                src="/owners_logo.png"
+                alt="오너스경영연구소 로고"
+                width={150}
+                height={50}
+                className="h-12 w-auto mr-3"
+                priority
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  오너스경영연구소
+                </h1>
+                <span className="text-sm text-gray-500">
+                  스마트 리크루팅 시스템
+                </span>
+              </div>
             </div>
           </div>
         </div>
