@@ -13,6 +13,9 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Phone,
+  Mail,
+  X,
   FileText,
   User,
   Calendar,
@@ -95,6 +98,12 @@ const getTimelineFromStatus = (status: string, createdAt: string) => {
   }))
 }
 
+interface ContactSettings {
+  email: string
+  phone: string
+  description: string
+}
+
 function ApplicantStatusContent() {
   const searchParams = useSearchParams()
   const [searchName, setSearchName] = useState('')
@@ -103,21 +112,40 @@ function ApplicantStatusContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [contactSettings, setContactSettings] = useState<ContactSettings | null>(null)
 
-  // URL 파라미터에서 이름과 전화번호 자동 설정
+  // URL 파라미터 및 localStorage에서 이름과 전화번호 자동 설정
   useEffect(() => {
-    const name = searchParams?.get('name')
-    const phone = searchParams?.get('phone')
+    const name = searchParams?.get('name') || localStorage.getItem('applicantSearchName')
+    const phone = searchParams?.get('phone') || localStorage.getItem('applicantSearchPhone')
 
     if (name && phone) {
       setSearchName(name)
       setSearchPhone(phone)
+      // localStorage에 저장
+      localStorage.setItem('applicantSearchName', name)
+      localStorage.setItem('applicantSearchPhone', phone)
       // 자동으로 검색 실행
       setTimeout(() => {
         handleSearchWithParams(name, phone)
       }, 100)
     }
   }, [searchParams])
+
+  const fetchContactSettings = async () => {
+    try {
+      const response = await fetch('/api/contact')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          setContactSettings(result.data)
+        }
+      }
+    } catch (error) {
+      // Failed to fetch contact settings
+    }
+  }
 
   const handleSearchWithParams = async (name: string, phone: string) => {
     if (!name.trim() || !phone.trim()) return
@@ -140,6 +168,9 @@ function ApplicantStatusContent() {
 
         if (foundApplicant) {
           setApplicantData(foundApplicant)
+          // 성공적으로 찾은 경우 localStorage에 저장
+          localStorage.setItem('applicantSearchName', cleanSearchName)
+          localStorage.setItem('applicantSearchPhone', cleanSearchPhone)
         } else {
           setError('입력하신 이름과 연락처가 일치하는 지원자를 찾을 수 없습니다.')
         }
@@ -147,7 +178,6 @@ function ApplicantStatusContent() {
         setError('지원자 정보를 불러오는 중 오류가 발생했습니다.')
       }
     } catch (error) {
-      console.error('Search error:', error)
       setError('시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
       setLoading(false)
@@ -171,32 +201,21 @@ function ApplicantStatusContent() {
         // 이름과 전화번호가 모두 일치하는 지원자 찾기
         const cleanSearchName = searchName.trim() // 이름 앞뒤 공백 제거
         const cleanSearchPhone = searchPhone.replace(/[^0-9]/g, '')
-        console.log('🔍 검색 정보:', {
-          searchName,
-          cleanSearchName,
-          searchPhone,
-          cleanSearchPhone,
-          totalApplicants: result.data.length
-        })
 
         const foundApplicant = result.data.find((applicant: any) => {
           const cleanApplicantPhone = applicant.phone.replace(/[^0-9]/g, '')
           const nameMatch = applicant.name === cleanSearchName // trim된 이름으로 비교
           const phoneMatch = cleanApplicantPhone === cleanSearchPhone
 
-          console.log('📞 비교:', {
-            applicantName: applicant.name,
-            applicantPhone: applicant.phone,
-            cleanApplicantPhone,
-            nameMatch,
-            phoneMatch
-          })
 
           return nameMatch && phoneMatch
         })
 
         if (foundApplicant) {
           setApplicantData(foundApplicant)
+          // 성공적으로 찾은 경우 localStorage에 저장
+          localStorage.setItem('applicantSearchName', cleanSearchName)
+          localStorage.setItem('applicantSearchPhone', cleanSearchPhone)
         } else {
           setError('입력하신 이름과 연락처가 일치하는 지원자를 찾을 수 없습니다. 정확한 정보를 입력해주세요.')
         }
@@ -204,7 +223,6 @@ function ApplicantStatusContent() {
         setError('지원자 정보를 불러오는 중 오류가 발생했습니다.')
       }
     } catch (error) {
-      console.error('Search error:', error)
       setError('시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
       setLoading(false)
@@ -312,7 +330,6 @@ function ApplicantStatusContent() {
                         <User className="mr-2 h-6 w-6 text-blue-600" />
                         지원자 정보
                       </CardTitle>
-                      <CardDescription>신청번호: {applicantData.id}</CardDescription>
                     </div>
                     {getStatusBadge(applicantData.status)}
                   </div>
@@ -461,7 +478,14 @@ function ApplicantStatusContent() {
                     <p className="text-sm text-gray-600 mb-3">
                       진행 과정에서 궁금한 사항이 있으시면 언제든지 연락해 주세요.
                     </p>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        fetchContactSettings()
+                        setShowContactModal(true)
+                      }}
+                    >
                       문의하기
                     </Button>
                   </div>
@@ -471,6 +495,58 @@ function ApplicantStatusContent() {
           </>
         )}
       </div>
+
+      {/* 문의하기 모달 */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">문의하기</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowContactModal(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {contactSettings ? (
+              <div className="space-y-4">
+                <p className="text-gray-600 text-sm mb-4">
+                  {contactSettings.description}
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Mail className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">이메일</div>
+                      <div className="text-sm text-gray-500">{contactSettings.email}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Phone className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">전화번호</div>
+                      <div className="text-sm text-gray-500">{contactSettings.phone}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <div className="text-gray-500">연락처 정보를 불러오는 중...</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

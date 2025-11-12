@@ -77,7 +77,7 @@ export async function createApplicant(data: ApplicantFormData) {
     const result = await response.json()
     return { success: true, data: result.data }
   } catch (error) {
-    console.error('Error in createApplicant:', error)
+    // Error in createApplicant
     return {
       success: false,
       error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'
@@ -115,13 +115,13 @@ export async function getApplicants() {
       .order('submitted_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching applicants:', error)
+      // Error fetching applicants
       throw new Error(`지원자 목록 조회에 실패했습니다: ${error.message}`)
     }
 
     return { success: true, data }
   } catch (error) {
-    console.error('Error in getApplicants:', error)
+    // Error in getApplicants
     return {
       success: false,
       error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'
@@ -131,7 +131,7 @@ export async function getApplicants() {
 
 export async function updateApplicantStatus(id: string, status: ApplicantStatus) {
   try {
-    console.log('🔄 Client: Updating applicant status via API:', { id, status, timestamp: new Date().toISOString() })
+    // Updating applicant status via API
 
     // API 라우트로 요청
     const response = await fetch(`/api/applicants/${id}/status`, {
@@ -142,15 +142,11 @@ export async function updateApplicantStatus(id: string, status: ApplicantStatus)
       body: JSON.stringify({ status }),
     })
 
-    console.log('📡 API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
-    })
+    // API Response received
 
     if (!response.ok) {
       const errorData = await response.json()
-      console.error('❌ API Error:', errorData)
+      // API Error
       return {
         success: false,
         error: errorData.error || '상태 업데이트에 실패했습니다.'
@@ -158,11 +154,11 @@ export async function updateApplicantStatus(id: string, status: ApplicantStatus)
     }
 
     const result = await response.json()
-    console.log('✅ Client: API call successful:', result)
+    // API call successful
 
     return result
   } catch (error) {
-    console.error('💥 Client: Error calling API:', error)
+    // Error calling API
     return {
       success: false,
       error: error instanceof Error ? error.message : '네트워크 오류가 발생했습니다'
@@ -191,7 +187,7 @@ export async function checkDuplicateApplicant(name: string, phone: string) {
     const result = await response.json()
     return result
   } catch (error) {
-    console.error('Error checking duplicate:', error)
+    // Error checking duplicate
     return {
       success: false,
       error: error instanceof Error ? error.message : '네트워크 오류가 발생했습니다'
@@ -201,11 +197,7 @@ export async function checkDuplicateApplicant(name: string, phone: string) {
 
 export async function updateApplicantRecruiter(applicantId: string, recruiterName: string | null) {
   try {
-    console.log('🔄 Client: Updating applicant recruiter via API:', {
-      applicantId,
-      recruiterName,
-      timestamp: new Date().toISOString()
-    })
+    // Updating applicant recruiter via API
 
     // API 라우트로 요청
     const response = await fetch(`/api/applicants/${applicantId}/recruiter`, {
@@ -216,19 +208,11 @@ export async function updateApplicantRecruiter(applicantId: string, recruiterNam
       body: JSON.stringify({ recruiterName }),
     })
 
-    console.log('📡 Recruiter API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
-    })
+    // Recruiter API Response received
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error('❌ Recruiter API Error:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorData
-      })
+      // Recruiter API Error
       return {
         success: false,
         error: errorData.error || `HTTP ${response.status}: ${response.statusText}` || '도입자 정보 수정에 실패했습니다.'
@@ -236,11 +220,11 @@ export async function updateApplicantRecruiter(applicantId: string, recruiterNam
     }
 
     const result = await response.json()
-    console.log('✅ Client: Recruiter API call successful:', result)
+    // Recruiter API call successful
 
     return result
   } catch (error) {
-    console.error('💥 Client: Error calling recruiter API:', error)
+    // Error calling recruiter API
     return {
       success: false,
       error: error instanceof Error ? error.message : '네트워크 오류가 발생했습니다'

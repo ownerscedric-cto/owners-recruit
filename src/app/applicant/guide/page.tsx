@@ -30,28 +30,27 @@ export default function ApplicantGuidePage() {
   useEffect(() => {
     const loadGuideFile = async () => {
       try {
-        // 먼저 데이터베이스에서 시도
+        // 데이터베이스에서 가이드 파일 조회
         const result = await getDownloadableFiles(true, 'guide')
         if (result.success && result.data && result.data.length > 0) {
           // 가장 최근에 업로드된 가이드 파일 선택
           const latestGuide = result.data
-            .filter((file: DownloadableFile) => file.title.includes('위촉') || file.title.includes('해촉'))
+            .filter((file: DownloadableFile) => file.title.includes('위촉') || file.title.includes('해촉') || file.category === 'guide')
             .sort((a: DownloadableFile, b: DownloadableFile) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
 
-          setGuideFile(latestGuide || null)
+          setGuideFile(latestGuide || result.data[0])
         } else {
-          // 데이터베이스에서 실패하면 파일 시스템에서 직접 조회
+          // 데이터베이스에서 실패하면 파일 시스템에서 대체 (로컬 개발용)
           const fallbackResponse = await fetch('/api/files/guide')
           if (fallbackResponse.ok) {
             const fallbackResult = await fallbackResponse.json()
             if (fallbackResult.success && fallbackResult.data && fallbackResult.data.length > 0) {
-              setGuideFile(fallbackResult.data[0]) // 최신 파일
+              setGuideFile(fallbackResult.data[0])
             }
           }
         }
       } catch (error) {
-        console.error('Error loading guide file:', error)
-        // 데이터베이스 실패 시 파일 시스템에서 시도
+        // 에러 발생 시 파일 시스템 대체 시도 (로컬 개발용)
         try {
           const fallbackResponse = await fetch('/api/files/guide')
           if (fallbackResponse.ok) {
@@ -61,7 +60,7 @@ export default function ApplicantGuidePage() {
             }
           }
         } catch (fallbackError) {
-          console.error('Fallback error:', fallbackError)
+          // 최종 실패
         }
       } finally {
         setIsLoading(false)
@@ -75,15 +74,15 @@ export default function ApplicantGuidePage() {
     if (!guideFile) return
 
     try {
-      // 파일명으로 된 ID인 경우 (파일 시스템 접근) vs UUID인 경우 (데이터베이스 접근) 구분
+      // 파일 ID가 UUID 형태인지 파일명인지 확인하여 적절한 API 사용
       const isFileSystemFile = guideFile.id.includes('.pdf')
 
       let response
       if (isFileSystemFile) {
-        // 파일 시스템에서 직접 다운로드
+        // 파일 시스템에서 직접 다운로드 (로컬 개발용)
         response = await fetch(`/api/files/guide/download/${guideFile.id}`)
       } else {
-        // 데이터베이스를 통한 다운로드
+        // 데이터베이스를 통한 다운로드 (프로덕션용)
         response = await fetch(`/api/files/${guideFile.id}/download`)
       }
 
@@ -102,7 +101,6 @@ export default function ApplicantGuidePage() {
         alert('파일 다운로드에 실패했습니다.')
       }
     } catch (error) {
-      console.error('Download error:', error)
       alert('파일 다운로드 중 오류가 발생했습니다.')
     }
   }

@@ -20,10 +20,17 @@ import {
   Settings,
   AlertTriangle,
   CheckCircle,
-  Loader2
+  Loader2,
+  Phone
 } from 'lucide-react'
 import { getSystemSettings, updateSystemSettings, SystemSettingsData } from '@/lib/system-settings'
 import { DebugViewer } from '@/components/admin/debug-viewer'
+
+interface ContactSettings {
+  email: string
+  phone: string
+  description: string
+}
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SystemSettingsData>({
@@ -53,6 +60,14 @@ export default function AdminSettingsPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [error, setError] = useState<string>('')
   const [success, setSuccess] = useState<string>('')
+
+  const [contactSettings, setContactSettings] = useState<ContactSettings>({
+    email: '',
+    phone: '',
+    description: ''
+  })
+  const [contactLoading, setContactLoading] = useState(false)
+  const [contactSaving, setContactSaving] = useState(false)
 
   useEffect(() => {
     loadSettings()
@@ -92,6 +107,52 @@ export default function AdminSettingsPage() {
       ...prev,
       [key]: value
     }))
+  }
+
+  const fetchContactSettings = async () => {
+    setContactLoading(true)
+    try {
+      const response = await fetch('/api/contact')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          setContactSettings(result.data)
+        }
+      }
+    } catch (error) {
+      setError('연락처 정보를 불러오는 데 실패했습니다.')
+    } finally {
+      setContactLoading(false)
+    }
+  }
+
+  const saveContactSettings = async () => {
+    setContactSaving(true)
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contactSettings),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          setSuccess('연락처 설정이 저장되었습니다.')
+          setTimeout(() => setSuccess(''), 3000)
+        } else {
+          setError('저장에 실패했습니다: ' + result.error)
+        }
+      } else {
+        setError('저장에 실패했습니다.')
+      }
+    } catch (error) {
+      setError('저장 중 오류가 발생했습니다.')
+    } finally {
+      setContactSaving(false)
+    }
   }
 
   if (loading) {
@@ -150,9 +211,18 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="system" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+        <Tabs
+          defaultValue="system"
+          className="w-full"
+          onValueChange={(value) => {
+            if (value === 'contact' && !contactSettings.email) {
+              fetchContactSettings()
+            }
+          }}
+        >
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="system">시스템</TabsTrigger>
+            <TabsTrigger value="contact">연락처</TabsTrigger>
             <TabsTrigger value="database">데이터베이스</TabsTrigger>
             <TabsTrigger value="email">이메일</TabsTrigger>
             <TabsTrigger value="security">보안</TabsTrigger>
@@ -239,6 +309,125 @@ export default function AdminSettingsPage() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* 연락처 관리 */}
+          <TabsContent value="contact">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Phone className="mr-2 h-5 w-5" />
+                  연락처 관리
+                </CardTitle>
+                <CardDescription>
+                  신청자들이 문의할 때 사용할 대표 연락처를 관리합니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {contactLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <div className="text-gray-500">연락처 정보를 불러오는 중...</div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="contactEmail">대표 이메일</Label>
+                        <div className="flex mt-1">
+                          <Mail className="w-4 h-4 text-gray-400 mt-3 mr-2" />
+                          <Input
+                            id="contactEmail"
+                            type="email"
+                            value={contactSettings.email}
+                            onChange={(e) => setContactSettings(prev => ({
+                              ...prev,
+                              email: e.target.value
+                            }))}
+                            placeholder="contact@owners.co.kr"
+                            className="flex-1"
+                          />
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">신청자가 이메일로 문의할 때 사용할 주소</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="contactPhone">대표 전화번호</Label>
+                        <div className="flex mt-1">
+                          <Phone className="w-4 h-4 text-gray-400 mt-3 mr-2" />
+                          <Input
+                            id="contactPhone"
+                            type="tel"
+                            value={contactSettings.phone}
+                            onChange={(e) => setContactSettings(prev => ({
+                              ...prev,
+                              phone: e.target.value
+                            }))}
+                            placeholder="02-1234-5678"
+                            className="flex-1"
+                          />
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">신청자가 전화로 문의할 때 사용할 번호</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="contactDescription">문의 안내 메시지</Label>
+                      <Textarea
+                        id="contactDescription"
+                        value={contactSettings.description}
+                        onChange={(e) => setContactSettings(prev => ({
+                          ...prev,
+                          description: e.target.value
+                        }))}
+                        placeholder="궁금한 사항이 있으시면 언제든지 연락해 주세요."
+                        className="mt-1 resize-none"
+                        rows={3}
+                      />
+                      <p className="text-sm text-gray-500 mt-1">신청자에게 표시될 문의 안내 메시지</p>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium mb-3">미리보기</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                        <p className="text-sm text-gray-600">
+                          {contactSettings.description || '궁금한 사항이 있으시면 언제든지 연락해 주세요.'}
+                        </p>
+                        <div className="space-y-2">
+                          <div className="flex items-center text-sm">
+                            <Mail className="h-4 w-4 text-blue-600 mr-2" />
+                            <span className="font-medium">이메일:</span>
+                            <span className="ml-2">{contactSettings.email || 'contact@owners.co.kr'}</span>
+                          </div>
+                          <div className="flex items-center text-sm">
+                            <Phone className="h-4 w-4 text-green-600 mr-2" />
+                            <span className="font-medium">전화:</span>
+                            <span className="ml-2">{contactSettings.phone || '02-1234-5678'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button
+                        variant="outline"
+                        onClick={fetchContactSettings}
+                        disabled={contactLoading}
+                      >
+                        새로고침
+                      </Button>
+                      <Button
+                        onClick={saveContactSettings}
+                        disabled={contactSaving || !contactSettings.email || !contactSettings.phone}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {contactSaving ? '저장 중...' : '저장'}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* 데이터베이스 설정 */}

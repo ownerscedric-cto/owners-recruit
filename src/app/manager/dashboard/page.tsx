@@ -51,8 +51,7 @@ export default function ManagerDashboard() {
     completed: 0,
     reviewing: 0,
     thisMonth: 0,
-    lastMonth: 0,
-    avgProcessingTime: 2.8
+    lastMonth: 0
   })
 
   const fetchData = async () => {
@@ -94,12 +93,11 @@ export default function ManagerDashboard() {
           completed,
           reviewing,
           thisMonth,
-          lastMonth,
-          avgProcessingTime: 2.8
+          lastMonth
         })
       }
     } catch (error) {
-      console.error('데이터 로드 실패:', error)
+      // 데이터 로드 실패
     } finally {
       setLoading(false)
     }
@@ -206,7 +204,7 @@ export default function ManagerDashboard() {
             </div>
             <div className="mt-4">
               <span className="text-sm text-gray-600">
-                평균 처리 시간: {stats.avgProcessingTime}일
+                처리 대기 중
               </span>
             </div>
           </CardContent>

@@ -22,7 +22,6 @@ import {
   Bell,
   Shield,
   Database,
-  Mail,
   FileText,
   Plus,
   Trash2,
@@ -75,6 +74,7 @@ export default function SettingsPage() {
       [key]: value
     }))
   }
+
 
   const tabs = [
     { id: 'general', name: '일반 설정', icon: Settings },
@@ -182,6 +182,7 @@ export default function SettingsPage() {
               </Card>
             </div>
           )}
+
 
           {/* 입력 폼 설정 */}
           {activeTab === 'form' && (

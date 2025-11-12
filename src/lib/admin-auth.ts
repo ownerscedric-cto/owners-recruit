@@ -38,16 +38,13 @@ export function generateSessionToken(adminId: string): string {
 
 export function verifySessionToken(token: string): { adminId: string } | null {
   try {
-    console.log('Verifying token with secret length:', JWT_SECRET.length)
     const decoded = jwt.verify(token, JWT_SECRET) as any
-    console.log('Token decoded successfully, type:', decoded.type, 'adminId:', decoded.adminId)
     if (decoded.type !== 'admin_session') {
-      console.log('Invalid token type:', decoded.type)
       return null
     }
     return { adminId: decoded.adminId }
   } catch (error) {
-    console.error('Token verification error:', error)
+    // Token verification error
     return null
   }
 }
@@ -97,7 +94,7 @@ export async function authenticateAdmin(username: string, password: string): Pro
       })
 
     if (sessionError) {
-      console.error('Session creation error:', sessionError)
+      // Session creation error
       return { success: false, error: '세션 생성에 실패했습니다.' }
     }
 
@@ -113,7 +110,7 @@ export async function authenticateAdmin(username: string, password: string): Pro
       token: sessionToken
     }
   } catch (error) {
-    console.error('Authentication error:', error)
+    // Authentication error
     return { success: false, error: '인증 처리 중 오류가 발생했습니다.' }
   }
 }
@@ -141,7 +138,7 @@ export async function validateAdminSession(token: string): Promise<AdminUser | n
 
     return session.admins as AdminUser
   } catch (error) {
-    console.error('Session validation error:', error)
+    // Session validation error
     return null
   }
 }
@@ -157,7 +154,7 @@ export async function logoutAdmin(token: string): Promise<boolean> {
 
     return !error
   } catch (error) {
-    console.error('Logout error:', error)
+    // Logout error
     return false
   }
 }
@@ -171,7 +168,7 @@ export async function cleanupExpiredSessions(): Promise<void> {
       .delete()
       .lt('expires_at', new Date().toISOString())
   } catch (error) {
-    console.error('Cleanup expired sessions error:', error)
+    // Cleanup expired sessions error
   }
 }
 

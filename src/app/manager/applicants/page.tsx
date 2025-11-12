@@ -104,7 +104,7 @@ export default function ManagerApplicantsPage() {
         setApplicants(result.data)
       }
     } catch (error) {
-      console.error('지원자 목록 조회 실패:', error)
+      // 지원자 목록 조회 실패
     } finally {
       setLoading(false)
     }
@@ -125,7 +125,7 @@ export default function ManagerApplicantsPage() {
         alert('상태 변경에 실패했습니다: ' + result.error)
       }
     } catch (error) {
-      console.error('상태 변경 실패:', error)
+      // 상태 변경 실패
       alert('상태 변경 중 오류가 발생했습니다.')
     } finally {
       setUpdating(null)
@@ -163,7 +163,7 @@ export default function ManagerApplicantsPage() {
         setRecruiters(result.data)
       }
     } catch (error) {
-      console.error('모집인 목록 조회 실패:', error)
+      // 모집인 목록 조회 실패
     }
   }
 
@@ -173,7 +173,7 @@ export default function ManagerApplicantsPage() {
       const data = await getExamApplicationsByApplicant(applicantId)
       setExamApplications(data)
     } catch (error) {
-      console.error('시험 신청 내역 조회 실패:', error)
+      // 시험 신청 내역 조회 실패
       setExamApplications([])
     } finally {
       setLoadingExamApplications(false)
@@ -213,7 +213,7 @@ export default function ManagerApplicantsPage() {
         alert(result.error || '도입자 수정에 실패했습니다.')
       }
     } catch (error) {
-      console.error('Error updating recruiter:', error)
+      // Error updating recruiter
       alert('도입자 수정 중 오류가 발생했습니다.')
     }
   }
@@ -253,7 +253,7 @@ export default function ManagerApplicantsPage() {
         });
       }
     } catch (error) {
-      console.error('Error fetching exam applications:', error);
+      // Error fetching exam applications
       examApplicationsText = '\n\n<생명보험 시험 신청 정보>\n시험 신청 정보를 불러올 수 없습니다.\n\n';
     }
 

@@ -73,7 +73,7 @@ export default function ManagerReports() {
         setApplicants(result.data || [])
       }
     } catch (error) {
-      console.error('Error loading applicants:', error)
+      // Error loading applicants
     } finally {
       setLoading(false)
     }
