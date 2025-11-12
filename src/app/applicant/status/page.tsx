@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -95,7 +95,7 @@ const getTimelineFromStatus = (status: string, createdAt: string) => {
   }))
 }
 
-export default function ApplicantStatusPage() {
+function ApplicantStatusContent() {
   const searchParams = useSearchParams()
   const [searchName, setSearchName] = useState('')
   const [searchPhone, setSearchPhone] = useState('')
@@ -472,5 +472,18 @@ export default function ApplicantStatusPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ApplicantStatusPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <p>페이지를 로드하는 중...</p>
+      </div>
+    </div>}>
+      <ApplicantStatusContent />
+    </Suspense>
   )
 }
