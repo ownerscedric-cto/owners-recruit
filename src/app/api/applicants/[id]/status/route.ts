@@ -31,18 +31,10 @@ export async function PATCH(
       .from('applicants')
       .select('*')
       .eq('id', id)
-      .maybeSingle()
+      .single()
 
-    if (checkError) {
-      console.error('❌ API: Error checking applicant existence:', checkError)
-      return NextResponse.json(
-        { success: false, error: `지원자 확인에 실패했습니다: ${checkError.message}` },
-        { status: 500 }
-      )
-    }
-
-    if (!existingData) {
-      console.error('❌ API: Applicant not found:', id)
+    if (checkError || !existingData) {
+      console.error('❌ API: Applicant not found or error:', { id, error: checkError })
       return NextResponse.json(
         { success: false, error: '해당 지원자를 찾을 수 없습니다.' },
         { status: 404 }
