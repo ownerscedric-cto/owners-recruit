@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 전화번호가 일치하는 지원자 찾기
-    const duplicateApplicant = existingApplicants?.find(applicant => {
+    const duplicateApplicant = existingApplicants?.find((applicant: any) => {
       const cleanApplicantPhone = applicant.phone?.replace(/[^0-9]/g, '') || ''
       return cleanApplicantPhone === cleanPhone
     })
