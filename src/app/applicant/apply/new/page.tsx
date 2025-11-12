@@ -640,6 +640,7 @@ export default function NewApplicantPage() {
                       }
                       placeholder="000000-0000000"
                       maxLength={14}
+                      inputMode="numeric"
                     />
                   </div>
                 </div>
@@ -670,6 +671,7 @@ export default function NewApplicantPage() {
                       handleInputChange("bankAccount", e.target.value)
                     }
                     placeholder="123456-12-123456"
+                    inputMode="numeric"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     급여 입금용 계좌를 입력해주세요.
@@ -705,6 +707,7 @@ export default function NewApplicantPage() {
                       }
                       placeholder="010-1234-5678"
                       maxLength={13}
+                      inputMode="numeric"
                     />
                   </div>
                   <div>

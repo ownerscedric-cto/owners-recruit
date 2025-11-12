@@ -366,6 +366,7 @@ export default function RecruitersManagement({ children }: RecruitersManagementP
                       <Label htmlFor="phone" className="text-right">전화번호 <span className="text-red-500">*</span></Label>
                       <Input
                         id="phone"
+                        inputMode="numeric"
                         value={formatPhoneNumber(formData.phone)}
                         onChange={(e) => {
                           const cleaned = e.target.value.replace(/\D/g, '')
@@ -591,6 +592,7 @@ export default function RecruitersManagement({ children }: RecruitersManagementP
               <Label htmlFor="edit-phone" className="text-right">전화번호 <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-phone"
+                inputMode="numeric"
                 value={formatPhoneNumber(formData.phone)}
                 onChange={(e) => {
                   const cleaned = e.target.value.replace(/\D/g, '')

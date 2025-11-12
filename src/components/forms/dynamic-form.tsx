@@ -114,6 +114,18 @@ export function DynamicForm({ onDataChange, formData, applicantType = 'new', sho
           <Input
             id={field.field_name}
             type="text"
+            inputMode={
+              field.field_name?.includes('주민등록번호') ||
+              field.field_name?.includes('계좌번호') ||
+              field.field_name?.includes('전화번호') ||
+              field.field_name?.includes('휴대폰') ||
+              field.field_name?.includes('residentNumber') ||
+              field.field_name?.includes('bankAccount') ||
+              field.field_name?.includes('phone') ||
+              field.field_name?.includes('accountNumber')
+                ? 'numeric'
+                : undefined
+            }
             value={value}
             onChange={(e) => handleFieldChange(field.field_name, e.target.value)}
             placeholder={field.placeholder}
@@ -136,6 +148,7 @@ export function DynamicForm({ onDataChange, formData, applicantType = 'new', sho
           <Input
             id={field.field_name}
             type="tel"
+            inputMode="numeric"
             value={value}
             onChange={(e) => handleFieldChange(field.field_name, e.target.value)}
             placeholder={field.placeholder}

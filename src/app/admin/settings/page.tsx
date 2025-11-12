@@ -358,6 +358,7 @@ export default function AdminSettingsPage() {
                           <Input
                             id="contactPhone"
                             type="tel"
+                            inputMode="numeric"
                             value={contactSettings.phone}
                             onChange={(e) => setContactSettings(prev => ({
                               ...prev,
