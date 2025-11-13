@@ -23,7 +23,22 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('admin_token')
+      let token = localStorage.getItem('admin_token')
+
+      // localStorage에 토큰이 없으면 쿠키에서 확인
+      if (!token) {
+        const cookieToken = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('admin_token='))
+          ?.split('=')[1]
+
+        if (cookieToken) {
+          // 쿠키에서 토큰을 찾으면 localStorage에도 저장
+          localStorage.setItem('admin_token', cookieToken)
+          token = cookieToken
+        }
+      }
+
       if (!token) {
         setAdmin(null)
         setLoading(false)
@@ -42,11 +57,13 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         setAdmin(data.admin)
       } else {
         localStorage.removeItem('admin_token')
+        document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
         setAdmin(null)
       }
     } catch (error) {
       console.error('Auth check error:', error)
       localStorage.removeItem('admin_token')
+      document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       setAdmin(null)
     } finally {
       setLoading(false)
@@ -67,6 +84,9 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
       if (data.success) {
         localStorage.setItem('admin_token', data.token)
+        // 쿠키에도 토큰 저장 (미들웨어 인증용)
+        const isSecure = process.env.NODE_ENV === 'production'
+        document.cookie = `admin_token=${data.token}; path=/; max-age=${30 * 24 * 60 * 60}; ${isSecure ? 'secure; ' : ''}samesite=strict`
         setAdmin(data.admin)
         return true
       }
@@ -92,6 +112,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       console.error('Logout error:', error)
     } finally {
       localStorage.removeItem('admin_token')
+      // 쿠키도 함께 삭제
+      document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       setAdmin(null)
       router.push('/login')
     }
