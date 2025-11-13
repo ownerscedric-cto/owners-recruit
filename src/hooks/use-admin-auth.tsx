@@ -53,16 +53,20 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json()
 
-      if (data.success) {
+      if (data.success && data.admin) {
+        console.log('✅ [Auth] Valid token, user authenticated:', data.admin.username)
         setAdmin(data.admin)
       } else {
+        console.log('❌ [Auth] Invalid token, clearing auth state')
         localStorage.removeItem('admin_token')
+        document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=' + window.location.hostname
         document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
         setAdmin(null)
       }
     } catch (error) {
       console.error('Auth check error:', error)
       localStorage.removeItem('admin_token')
+      document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=' + window.location.hostname
       document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       setAdmin(null)
     } finally {
@@ -116,10 +120,31 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      // 토큰 정리
+      // 토큰 정리 - admin 관련 데이터만 완전 삭제
       localStorage.removeItem('admin_token')
-      // 쿠키도 함께 삭제
+
+      // admin 관련 다른 localStorage 항목들도 제거
+      const keys = Object.keys(localStorage)
+      keys.forEach(key => {
+        if (key.includes('admin') || key.includes('token')) {
+          localStorage.removeItem(key)
+        }
+      })
+
+      // 쿠키 삭제 - 더 포괄적으로
+      document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=' + window.location.hostname
       document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+
+      // sessionStorage도 정리
+      sessionStorage.clear()
+
+      // 토큰 제거 확인
+      const remainingToken = localStorage.getItem('admin_token')
+      const remainingCookie = document.cookie.includes('admin_token')
+
+      console.log('🧹 [Auth] Token cleanup verification:')
+      console.log('  - localStorage token:', remainingToken ? 'STILL EXISTS!' : 'cleared ✓')
+      console.log('  - cookie token:', remainingCookie ? 'STILL EXISTS!' : 'cleared ✓')
 
       console.log('🧹 [Auth] Tokens cleared, redirecting to login')
       router.push('/login')
