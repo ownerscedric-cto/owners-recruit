@@ -203,12 +203,11 @@ export default function ApplicantGuidePage() {
                   </Button>
                 ) : guideFile ? (
                   <Button
-                    className="w-full sm:w-auto"
-                    variant="outline"
+                    className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                     size="lg"
                     onClick={handleDownload}
                   >
-                    <Download className="h-5 w-5 mr-2" />
+                    <Download className="h-5 w-5 mr-2 animate-bounce" />
                     위촉/해촉 안내서 다운로드
                   </Button>
                 ) : (

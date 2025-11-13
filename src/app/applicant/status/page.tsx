@@ -31,6 +31,7 @@ interface ApplicantData {
   phone: string
   status: string
   submitted_at: string
+  appointment_deadline?: string
   recruiters?: {
     name: string
     team: string
@@ -72,10 +73,11 @@ const getStatusMessage = (status: string) => {
   }
 }
 
-const getTimelineFromStatus = (status: string, createdAt: string) => {
+const getTimelineFromStatus = (status: string, createdAt: string, appointmentDeadline?: string) => {
   const steps = [
     { step: '신청 접수', description: '입사 신청서 제출 완료' },
-    { step: '서류 검토', description: '제출 서류 검토 중' },
+    { step: '1차 서류 검토', description: '제출 서류 1차 검토 중' },
+    { step: '2차 서류 검토', description: '본사 발송된 위촉 링크에 필수 서류 등록', additionalInfo: appointmentDeadline ? `서류 제출 기한: ${new Date(appointmentDeadline).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}` : null },
     { step: '승인 처리', description: '인사팀 승인 대기' },
     { step: '입사 완료', description: '시스템 등록 및 교육 안내' },
   ]
@@ -83,9 +85,9 @@ const getTimelineFromStatus = (status: string, createdAt: string) => {
   const statusMap: Record<string, number> = {
     pending: 0,
     reviewing: 1,
-    approved: 2,
-    completed: 3,
-    rejected: 1 // rejected shows up to reviewing step
+    approved: 3,
+    completed: 4,
+    rejected: 1 // rejected shows up to 1차 서류 검토 step
   }
 
   const currentStepIndex = statusMap[status] ?? 0
@@ -229,7 +231,7 @@ function ApplicantStatusContent() {
     }
   }
 
-  const timeline = applicantData ? getTimelineFromStatus(applicantData.status, applicantData.submitted_at) : []
+  const timeline = applicantData ? getTimelineFromStatus(applicantData.status, applicantData.submitted_at, applicantData.appointment_deadline) : []
   const currentStep = timeline.findIndex(step => step.status === 'current') + 1
 
   return (
@@ -402,8 +404,14 @@ function ApplicantStatusContent() {
                             </div>
                           )}
                           {item.status === 'current' && (
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Clock className="h-4 w-4 text-blue-600" />
+                            <div className="relative w-8 h-8">
+                              {/* 파장 효과 애니메이션 */}
+                              <div className="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-30"></div>
+                              <div className="absolute inset-0 bg-blue-400 rounded-full animate-pulse opacity-20"></div>
+                              {/* 메인 아이콘 */}
+                              <div className="relative w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-300">
+                                <Clock className="h-4 w-4 text-blue-600" />
+                              </div>
                             </div>
                           )}
                           {item.status === 'upcoming' && (
@@ -420,9 +428,9 @@ function ApplicantStatusContent() {
                             {item.step}
                           </h4>
                           <p className="text-sm text-gray-500">{item.description}</p>
-                          {item.date && (
-                            <p className="text-xs text-gray-400 mt-1">
-                              {new Date(item.date).toLocaleString('ko-KR')}
+                          {(item as any).additionalInfo && (
+                            <p className="text-sm text-orange-600 font-medium mt-1">
+                              {(item as any).additionalInfo}
                             </p>
                           )}
                         </div>

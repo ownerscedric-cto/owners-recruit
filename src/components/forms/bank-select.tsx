@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Building2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Building2, Search, Check } from 'lucide-react'
 
 interface BankSelectProps {
   label?: string
@@ -48,10 +48,24 @@ export function BankSelect({
   label = "은행명",
   value,
   onChange,
-  placeholder = "은행을 선택해주세요",
+  placeholder = "은행을 검색하거나 선택해주세요",
   required = false,
   description
 }: BankSelectProps) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+
+  // 검색어에 따른 필터링
+  const filteredBanks = koreanBanks.filter(bank =>
+    bank.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const handleSelect = (bankName: string) => {
+    onChange(bankName)
+    setSearchTerm('')
+    setIsOpen(false)
+  }
+
   return (
     <div className="space-y-2">
       <Label htmlFor="bank-select">
@@ -59,26 +73,81 @@ export function BankSelect({
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
       <div className="relative">
-        <Select value={value} onValueChange={onChange}>
-          <SelectTrigger id="bank-select" className="w-full">
-            <div className="flex items-center">
-              <Building2 className="h-4 w-4 mr-2 text-gray-400" />
-              <SelectValue placeholder={placeholder} />
+        {/* 선택된 은행 표시 또는 검색 입력창 */}
+        <div
+          className="flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background cursor-pointer hover:bg-accent hover:text-accent-foreground"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div className="flex items-center flex-1">
+            <Building2 className="h-4 w-4 mr-2 text-gray-400" />
+            {value ? (
+              <span className="font-medium">{value}</span>
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
+          </div>
+          <Search className="h-4 w-4 text-gray-400" />
+        </div>
+
+        {/* 드롭다운 메뉴 */}
+        {isOpen && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+            {/* 검색 입력창 */}
+            <div className="p-2 border-b border-gray-200">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="은행명으로 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                />
+              </div>
             </div>
-          </SelectTrigger>
-          <SelectContent className="max-h-60">
-            {koreanBanks.map((bank) => (
-              <SelectItem key={bank} value={bank}>
-                {bank}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+            {/* 은행 목록 */}
+            <div className="max-h-60 overflow-y-auto">
+              {filteredBanks.length > 0 ? (
+                filteredBanks.map((bank) => (
+                  <div
+                    key={bank}
+                    className={`px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between ${
+                      value === bank ? 'bg-blue-50' : ''
+                    }`}
+                    onClick={() => handleSelect(bank)}
+                  >
+                    <span className={value === bank ? 'font-medium text-blue-600' : ''}>
+                      {bank}
+                    </span>
+                    {value === bank && (
+                      <Check className="h-4 w-4 text-blue-600" />
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-sm text-gray-500">
+                  {searchTerm ? '검색 결과가 없습니다' : '등록된 은행이 없습니다'}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       {description && (
         <p className="text-sm text-gray-500">
           {description}
         </p>
+      )}
+
+      {/* 클릭 외부 영역 감지를 위한 오버레이 */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsOpen(false)}
+        />
       )}
     </div>
   )

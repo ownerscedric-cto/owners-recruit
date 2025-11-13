@@ -66,8 +66,8 @@ export default function ApplicantApplyPage() {
               </div>
               <CardTitle className="text-xl font-bold">신입자</CardTitle>
               <CardDescription className="text-center">
-                보험업계 경력이 없거나<br />
-                3년 이내 1년 경력이 없는 경우
+                자격증은 있으나<br />
+                보험 실무 경력이 1년(365일) 미만인 경우
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -142,36 +142,7 @@ export default function ApplicantApplyPage() {
           </Card>
         </div>
 
-        {/* 구분 기준 안내 */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-lg">신입/경력 구분 기준</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <h4 className="font-medium text-green-700">신입자로 분류되는 경우</h4>
-                <ul className="text-sm space-y-1 text-gray-600">
-                  <li>• 보험업계 경력이 전혀 없는 경우</li>
-                  <li>• 보험업계 경력이 1년 미만인 경우</li>
-                  <li>• 3년 이내 보험업계 경력이 없는 경우</li>
-                  <li>• 자격증은 있으나 실무 경력이 없는 경우</li>
-                </ul>
-              </div>
-              <div className="space-y-3">
-                <h4 className="font-medium text-purple-700">경력자로 분류되는 경우</h4>
-                <ul className="text-sm space-y-1 text-gray-600">
-                  <li>• 보험업계에서 1년 이상 근무한 경우</li>
-                  <li>• 다른 보험회사 재직 중인 경우</li>
-                  <li>• 최근 3년 이내 보험업계 경력이 있는 경우</li>
-                  <li>• 보험 관련 실무 경험이 충분한 경우</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 다음 버튼 */}
+{/* 다음 버튼 */}
         <div className="text-center">
           <Button
             onClick={handleNext}

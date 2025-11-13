@@ -22,7 +22,7 @@ import { BankSelect } from "@/components/forms/bank-select";
 import { RecruiterSelect } from "@/components/forms/recruiter-select";
 import { DocumentGuide } from "@/components/forms/document-guide";
 import { DocumentSummary } from "@/components/forms/document-summary";
-import { DatePicker } from "@/components/ui/date-picker";
+// import { DatePicker } from "@/components/ui/date-picker"; // 추후 복구용으로 주석 처리
 import {
   ChevronLeft,
   ChevronRight,
@@ -749,6 +749,24 @@ export default function NewApplicantPage() {
             {/* Step 3: 시험 지역 및 일정 선택 */}
             {currentStep === 3 && (
               <div className="space-y-6">
+                {/* 시험 안내 사항 */}
+                <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                  <h4 className="font-semibold text-indigo-700 mb-3 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    시험 안내 사항
+                  </h4>
+                  <div className="space-y-2 text-sm text-indigo-600">
+                    <div className="flex items-start">
+                      <span className="font-medium mr-2">📍</span>
+                      <span>시험 장소 및 시간은 선택한 지역 내에서 랜덤으로 배정됩니다.</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="font-medium mr-2">📄</span>
+                      <span>수험표는 시험일 2일 전에 전달 예정입니다.</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 시험 지역 선택 */}
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-blue-700 mb-3 flex items-center">
@@ -822,7 +840,7 @@ export default function NewApplicantPage() {
                               onClick={() => !isClosed && handleScheduleSelect(schedule.id)}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center">
+                                <div className="flex items-center flex-1 min-w-0">
                                   <input
                                     type="radio"
                                     name="examSchedule"
@@ -830,20 +848,22 @@ export default function NewApplicantPage() {
                                     checked={formData.selectedScheduleId === schedule.id}
                                     onChange={() => handleScheduleSelect(schedule.id)}
                                     disabled={isClosed}
-                                    className="mr-3"
+                                    className="mr-3 flex-shrink-0"
                                   />
-                                  <div>
-                                    <div className={`font-medium flex items-center ${
+                                  <div className="flex-1 min-w-0">
+                                    <div className={`font-medium flex items-center gap-2 flex-wrap ${
                                       isClosed ? 'text-red-600' : 'text-gray-900'
                                     }`}>
-                                      {schedule.session_number}차
-                                      {isClosed && (
-                                        <span className="ml-2 px-2 py-1 bg-red-200 text-red-800 text-xs rounded-full">
-                                          신청 마감
-                                        </span>
-                                      )}
+                                      <span>{schedule.session_number}차</span>
+                                      <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${
+                                        isClosed
+                                          ? 'bg-red-500 text-white'
+                                          : 'bg-green-500 text-white'
+                                      }`}>
+                                        {isClosed ? '신청 마감' : '접수 가능'}
+                                      </span>
                                     </div>
-                                    <div className={`text-sm ${
+                                    <div className={`text-sm break-words mt-1 ${
                                       isClosed ? 'text-red-500' : 'text-gray-600'
                                     }`}>
                                       시험일: {new Date(schedule.exam_date).toLocaleDateString('ko-KR', {
@@ -854,7 +874,7 @@ export default function NewApplicantPage() {
                                       })}
                                     </div>
                                     {isClosed && schedule.internal_deadline_date && (
-                                      <div className="text-xs text-red-500 mt-1">
+                                      <div className="text-xs text-red-500 mt-1 break-words">
                                         신청마감: {new Date(schedule.internal_deadline_date).toLocaleDateString('ko-KR', {
                                           month: 'long',
                                           day: 'numeric',
@@ -866,11 +886,6 @@ export default function NewApplicantPage() {
                                       </div>
                                     )}
                                   </div>
-                                </div>
-                                <div className={`text-sm ${
-                                  isClosed ? 'text-red-400' : 'text-gray-500'
-                                }`}>
-                                  {schedule.locations.length}개 지역
                                 </div>
                               </div>
                             </div>
@@ -904,6 +919,7 @@ export default function NewApplicantPage() {
                         <Label htmlFor="lifeInsurancePassDate">
                           생명보험 합격 예정일 <span className="text-red-500">*</span>
                         </Label>
+                        {/* DatePicker 캘린더 기능 - 추후 복구 가능하도록 주석 처리
                         <DatePicker
                           id="lifeInsurancePassDate"
                           value={formData.lifeInsurancePassDate}
@@ -911,6 +927,19 @@ export default function NewApplicantPage() {
                             handleInputChange("lifeInsurancePassDate", date)
                           }
                           placeholder="생명보험 합격 예정일 선택"
+                        />
+                        */}
+                        <Input
+                          id="lifeInsurancePassDate"
+                          value={formData.lifeInsurancePassDate ? new Date(formData.lifeInsurancePassDate).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            weekday: 'long'
+                          }) : ''}
+                          readOnly
+                          placeholder="시험 일정 선택 시 자동 입력됩니다"
+                          className="bg-gray-50 cursor-not-allowed"
                         />
                         <p className="text-xs text-orange-600 mt-1">
                           선택한 시험일로 자동 설정됩니다.
@@ -920,6 +949,7 @@ export default function NewApplicantPage() {
                         <Label htmlFor="lifeEducationDate">
                           생명교육 이수 예정일 <span className="text-red-500">*</span>
                         </Label>
+                        {/* DatePicker 캘린더 기능 - 추후 복구 가능하도록 주석 처리
                         <DatePicker
                           id="lifeEducationDate"
                           value={formData.lifeEducationDate}
@@ -927,6 +957,19 @@ export default function NewApplicantPage() {
                             handleInputChange("lifeEducationDate", date)
                           }
                           placeholder="생명교육 이수 예정일 선택"
+                        />
+                        */}
+                        <Input
+                          id="lifeEducationDate"
+                          value={formData.lifeEducationDate ? new Date(formData.lifeEducationDate).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            weekday: 'long'
+                          }) : ''}
+                          readOnly
+                          placeholder="시험 일정 선택 시 자동 입력됩니다"
+                          className="bg-gray-50 cursor-not-allowed"
                         />
                         <p className="text-xs text-orange-600 mt-1">
                           시험일 하루 전으로 자동 설정됩니다.

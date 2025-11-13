@@ -195,17 +195,17 @@ export function DocumentGuide({
                 {downloadableFiles.map((file) => (
                   <div
                     key={file.id}
-                    className="p-3 border border-indigo-200 rounded-lg bg-indigo-50"
+                    className="p-4 border-2 border-blue-300 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 hover:shadow-lg transition-shadow"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h6 className="font-medium text-indigo-900">{file.title}</h6>
+                        <h6 className="font-semibold text-gray-900 text-lg">{file.title}</h6>
                         {file.description && (
-                          <p className="text-sm text-indigo-700 mt-1">
+                          <p className="text-sm text-gray-600 mt-1">
                             {file.description}
                           </p>
                         )}
-                        <div className="text-xs text-indigo-600 mt-1">
+                        <div className="text-xs text-gray-500 mt-2">
                           {file.category === 'guide' && '📋 입사 가이드'}
                           {file.category === 'form' && '📄 양식'}
                           {file.category === 'manual' && '📖 매뉴얼'}
@@ -214,9 +214,9 @@ export function DocumentGuide({
                       </div>
                       <button
                         onClick={() => handleFileDownload(file)}
-                        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ml-3"
+                        className="inline-flex items-center px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300 ml-4"
                       >
-                        <Download className="h-4 w-4 mr-1" />
+                        <Download className="h-5 w-5 mr-2 animate-bounce" />
                         다운로드
                       </button>
                     </div>
@@ -258,7 +258,7 @@ export function DocumentGuide({
                   className="flex items-center"
                 >
                   <Calendar className="h-4 w-4 mr-2" />
-                  서류 준비 완료 예정일 *
+                  서류 준비 완료 예정일 <span className="text-red-500">*</span>
                 </Label>
                 <DatePicker
                   id="documentPreparationDate"
