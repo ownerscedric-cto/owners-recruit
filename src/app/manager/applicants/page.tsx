@@ -11,9 +11,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
 import { getApplicants, updateApplicantStatus, updateApplicantRecruiter } from '@/lib/applicants'
 import { getActiveRecruiters, type Recruiter } from '@/lib/recruiters'
 import { getExamApplicationsByApplicant } from '@/lib/exam-applications'
+import { getCareersByApplicant, type Career } from '@/lib/careers'
 import { Database } from '@/types/database'
 import { decryptResidentNumber } from '@/lib/encryption'
 import { useAdminAuth } from '@/hooks/use-admin-auth'
@@ -57,6 +59,7 @@ interface Applicant {
   applicant_type: 'new' | 'experienced'
   status: ApplicantStatus
   submitted_at: string
+  appointment_deadline?: string | null
   recruiters?: {
     name: string
     team: string
@@ -78,6 +81,8 @@ export default function ManagerApplicantsPage() {
   const [selectedRecruiter, setSelectedRecruiter] = useState<string>('')
   const [examApplications, setExamApplications] = useState<any[]>([])
   const [loadingExamApplications, setLoadingExamApplications] = useState(false)
+  const [careerData, setCareerData] = useState<Career[]>([])
+  const [loadingCareerData, setLoadingCareerData] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteReason, setDeleteReason] = useState('')
   const [applicantToDelete, setApplicantToDelete] = useState<Applicant | null>(null)
@@ -165,6 +170,10 @@ export default function ManagerApplicantsPage() {
     setShowDetailModal(true)
     // 시험 신청 내역 가져오기
     fetchExamApplications(applicant.id)
+    // 경력자인 경우 경력 정보도 가져오기
+    if (applicant.applicant_type === 'experienced') {
+      fetchCareerData(applicant.id)
+    }
   }
 
   const fetchRecruiters = async () => {
@@ -220,6 +229,42 @@ export default function ManagerApplicantsPage() {
     }
   }
 
+  const handleAppointmentDeadlineUpdate = async (applicantId: string, deadline: string) => {
+    try {
+      // 위촉 마감일 업데이트 API 호출
+      const response = await fetch('/api/applicants/appointment-deadline', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          applicantId,
+          appointmentDeadline: deadline || null
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 로컬 상태 업데이트
+        setApplicants(prev => prev.map(applicant =>
+          applicant.id === applicantId
+            ? { ...applicant, appointment_deadline: deadline || null }
+            : applicant
+        ))
+        setFilteredApplicants(prev => prev.map(applicant =>
+          applicant.id === applicantId
+            ? { ...applicant, appointment_deadline: deadline || null }
+            : applicant
+        ))
+      } else {
+        alert('위촉 마감일 업데이트에 실패했습니다.')
+      }
+    } catch (error) {
+      alert('위촉 마감일 업데이트 중 오류가 발생했습니다.')
+    }
+  }
+
   const fetchExamApplications = async (applicantId: string) => {
     setLoadingExamApplications(true)
     try {
@@ -233,12 +278,31 @@ export default function ManagerApplicantsPage() {
     }
   }
 
+  const fetchCareerData = async (applicantId: string) => {
+    setLoadingCareerData(true)
+    try {
+      const result = await getCareersByApplicant(applicantId)
+      if (result.success) {
+        setCareerData(result.data)
+      } else {
+        setCareerData([])
+      }
+    } catch (error) {
+      // 경력 정보 조회 실패
+      setCareerData([])
+    } finally {
+      setLoadingCareerData(false)
+    }
+  }
+
   const handleCloseDetail = () => {
     setSelectedApplicant(null)
     setShowDetailModal(false)
     setShowRecruiterEdit(false)
     setExamApplications([])
     setLoadingExamApplications(false)
+    setCareerData([])
+    setLoadingCareerData(false)
   }
 
   const handleRecruiterEdit = () => {
@@ -433,19 +497,20 @@ export default function ManagerApplicantsPage() {
                     <TableHead>모집인</TableHead>
                     <TableHead>상태</TableHead>
                     <TableHead>신청일</TableHead>
+                    <TableHead>위촉 마감일</TableHead>
                     <TableHead>액션</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
+                      <TableCell colSpan={7} className="text-center py-8">
                         <div className="text-gray-500">데이터를 불러오는 중...</div>
                       </TableCell>
                     </TableRow>
                   ) : filteredApplicants.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
+                      <TableCell colSpan={7} className="text-center py-8">
                         <div className="text-gray-500">
                           {searchTerm || statusFilter !== 'all'
                             ? '검색 조건에 맞는 지원자가 없습니다.'
@@ -458,18 +523,10 @@ export default function ManagerApplicantsPage() {
                     filteredApplicants.map((applicant) => (
                       <TableRow key={applicant.id}>
                         <TableCell className="font-medium">
-                          <div>
-                            <div className="font-semibold">{applicant.name}</div>
-                            <div className="text-sm text-gray-500">{applicant.email}</div>
-                          </div>
+                          <div className="font-semibold">{applicant.name}</div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm">
-                            <div>{applicant.phone}</div>
-                            <div className="text-gray-500 truncate max-w-32" title={applicant.address}>
-                              {applicant.address}
-                            </div>
-                          </div>
+                          <div className="text-sm">{applicant.phone}</div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
@@ -486,6 +543,17 @@ export default function ManagerApplicantsPage() {
                         </TableCell>
                         <TableCell className="text-sm text-gray-500">
                           {new Date(applicant.submitted_at).toLocaleDateString('ko-KR')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-36">
+                            <DatePicker
+                              value={applicant.appointment_deadline || ''}
+                              onChange={(date) => handleAppointmentDeadlineUpdate(applicant.id, date)}
+                              placeholder="위촉 마감일 선택"
+                              className="text-sm"
+                              min={new Date().toISOString().split('T')[0]}
+                            />
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1 flex-wrap">
@@ -739,6 +807,83 @@ export default function ManagerApplicantsPage() {
                     </Badge>
                   </div>
                 </div>
+
+                {/* 경력 정보 (경력자인 경우에만 표시) */}
+                {selectedApplicant.applicant_type === 'experienced' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-500">경력 정보</span>
+                    </div>
+                    {loadingCareerData ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                        <div className="text-sm text-gray-600 mt-2">경력 정보를 불러오는 중...</div>
+                      </div>
+                    ) : careerData.length > 0 ? (
+                      <div className="space-y-3">
+                        {careerData.map((career) => (
+                          <div key={career.id} className="border rounded-lg p-4 bg-gray-50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="font-medium text-gray-700">회사명:</span>{' '}
+                                <span>{career.company}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-700">직책:</span>{' '}
+                                <span>{career.position}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-700">근무기간:</span>{' '}
+                                <span>
+                                  {new Date(career.start_date).toLocaleDateString('ko-KR')} ~ {new Date(career.end_date).toLocaleDateString('ko-KR')}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-700">회사유형:</span>{' '}
+                                <Badge variant="outline">
+                                  {career.company_type === 'insurance' ? '보험회사' : '금융회사'}
+                                </Badge>
+                              </div>
+                              {career.termination_status && (
+                                <>
+                                  <div>
+                                    <span className="font-medium text-gray-700">말소 처리:</span>{' '}
+                                    <Badge
+                                      variant={
+                                        career.termination_status === 'completed' ? 'default' :
+                                        career.termination_status === 'in_progress' ? 'secondary' : 'destructive'
+                                      }
+                                    >
+                                      {career.termination_status === 'completed' ? '완료' :
+                                       career.termination_status === 'in_progress' ? '진행중' : '도움 필요'}
+                                    </Badge>
+                                  </div>
+                                  {career.termination_date && (
+                                    <div>
+                                      <span className="font-medium text-gray-700">말소 예정일:</span>{' '}
+                                      <span>{new Date(career.termination_date).toLocaleDateString('ko-KR')}</span>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                              {career.description && (
+                                <div className="md:col-span-2">
+                                  <span className="font-medium text-gray-700">설명:</span>{' '}
+                                  <span>{career.description}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        등록된 경력 정보가 없습니다.
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* 상태 정보 */}
                 <div className="space-y-3">

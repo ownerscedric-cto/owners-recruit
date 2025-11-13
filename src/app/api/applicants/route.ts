@@ -6,11 +6,14 @@ type ApplicantRow = Database['public']['Tables']['applicants']['Row']
 
 export async function POST(request: NextRequest) {
   try {
-    const applicantData = await request.json()
+    const requestData = await request.json()
+    const { previousCompanies, ...applicantData } = requestData
 
     console.log('🔄 API: Creating applicant:', {
       name: applicantData.name,
       email: applicantData.email,
+      applicant_type: applicantData.applicant_type,
+      hasCareerData: !!previousCompanies?.length,
       timestamp: new Date().toISOString()
     })
 
@@ -32,8 +35,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const applicantId = (applicant as ApplicantRow).id
+
+    // 경력자인 경우 경력 정보도 저장
+    if (applicantData.applicant_type === 'experienced' && previousCompanies?.length > 0) {
+      console.log('🔄 API: Saving career data:', {
+        applicantId,
+        careerCount: previousCompanies.length
+      })
+
+      const careerInserts = previousCompanies.map((career: any) => ({
+        applicant_id: applicantId,
+        company: career.companyName,
+        position: career.position,
+        start_date: career.startDate,
+        end_date: career.endDate,
+        description: null, // 설명은 현재 폼에서 입력받지 않음
+        company_type: career.companyType,
+        termination_status: career.terminationStatus || null,
+        termination_date: career.terminationDate || null
+      }))
+
+      const { error: careerError } = await supabaseService
+        .from('careers')
+        .insert(careerInserts)
+
+      if (careerError) {
+        console.error('❌ API: Career insert error:', careerError)
+        // 지원자는 이미 생성되었으므로 경력 정보 저장 실패만 로그
+        console.warn('⚠️ API: Applicant created but career data failed to save')
+      } else {
+        console.log('✅ API: Career data saved successfully')
+      }
+    }
+
     console.log('✅ API: Applicant created successfully:', {
-      id: (applicant as ApplicantRow).id,
+      id: applicantId,
       name: (applicant as ApplicantRow).name,
       email: (applicant as ApplicantRow).email
     })

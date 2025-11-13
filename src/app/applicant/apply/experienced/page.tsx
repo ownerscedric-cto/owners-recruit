@@ -60,7 +60,9 @@ interface ExperiencedApplicantFormData {
     position: string;
     startDate: string;
     endDate: string;
-    terminationConfirmed: boolean;
+    companyType: 'insurance' | 'financial';
+    terminationStatus?: 'completed' | 'in_progress' | 'need_help';
+    terminationDate?: string;
   }[];
 
   // 서류 준비 확인
@@ -109,7 +111,15 @@ export default function ExperiencedApplicantPage() {
     lifeInsurancePassDate: "",
     lifeEducationDate: "",
     finalSchool: "",
-    previousCompanies: [],
+    previousCompanies: [{
+      companyName: "",
+      position: "",
+      startDate: "",
+      endDate: "",
+      companyType: "insurance" as const,
+      terminationStatus: undefined,
+      terminationDate: "",
+    }],
     documentsConfirmed: false,
     documentPreparationDate: "",
     recruiterName: "",
@@ -147,6 +157,18 @@ export default function ExperiencedApplicantPage() {
   };
 
   const handleNext = async () => {
+    // 1단계(기본정보) 검증
+    if (currentStep === 1) {
+      if (!formData.name || formData.name.trim().length < 2) {
+        alert("이름을 올바르게 입력해주세요.");
+        return;
+      }
+      if (!formData.residentNumber || formData.residentNumber.length < 7) {
+        alert("주민등록번호 뒷자리를 올바르게 입력해주세요.");
+        return;
+      }
+    }
+
     // 2단계에서 중복 체크 수행
     if (currentStep === 2) {
       // 기본 검증 먼저 수행
@@ -177,6 +199,46 @@ export default function ExperiencedApplicantPage() {
           status: getStatusText(existingApplicant?.status || '알 수 없음')
         });
         setIsDuplicateFound(true);
+        return;
+      }
+    }
+
+    // 3단계(학력/자격) 검증
+    if (currentStep === 3) {
+      if (!formData.finalSchool || formData.finalSchool.trim().length === 0) {
+        alert("최종학교명을 입력해주세요.");
+        return;
+      }
+      if (!formData.lifeInsurancePassDate) {
+        alert("생명보험 합격일을 선택해주세요.");
+        return;
+      }
+      if (!formData.lifeEducationDate) {
+        alert("생명교육 이수일을 선택해주세요.");
+        return;
+      }
+    }
+
+    // 4단계(경력정보)에서 경력 입력 검증
+    if (currentStep === 4) {
+      if (!formData.previousCompanies || formData.previousCompanies.length === 0) {
+        alert("경력자의 경우 이전 보험회사 경력을 최소 1개 이상 입력해주세요.");
+        return;
+      }
+
+      // 입력된 경력 정보가 완전한지 확인
+      const hasIncompleteCareer = formData.previousCompanies.some(career =>
+        !career.companyName.trim() ||
+        !career.position.trim() ||
+        !career.startDate ||
+        !career.endDate ||
+        !career.companyType ||
+        (career.companyType === 'insurance' && !career.terminationStatus) ||
+        (career.companyType === 'insurance' && career.terminationStatus === 'in_progress' && !career.terminationDate)
+      );
+
+      if (hasIncompleteCareer) {
+        alert("모든 경력 정보를 완전히 입력해주세요 (회사명, 직급, 재직 기간, 업종 구분 필수 / 보험사의 경우 말소 처리 상태 필수).");
         return;
       }
     }
@@ -221,6 +283,7 @@ export default function ExperiencedApplicantPage() {
           documents_confirmed: formData.documentsConfirmed,
           document_preparation_date: formData.documentPreparationDate,
           applicant_type: 'experienced' as const,
+          previousCompanies: formData.previousCompanies,
         };
 
         const result = await createApplicant(applicantData);
@@ -269,7 +332,9 @@ export default function ExperiencedApplicantPage() {
           position: "",
           startDate: "",
           endDate: "",
-          terminationConfirmed: false,
+          companyType: "insurance" as const,
+          terminationStatus: undefined,
+          terminationDate: undefined,
         },
       ],
     }));
@@ -513,9 +578,10 @@ export default function ExperiencedApplicantPage() {
                   <Input
                     id="bankAccount"
                     value={formData.bankAccount}
-                    onChange={(e) =>
-                      handleInputChange("bankAccount", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9-]/g, '');
+                      handleInputChange("bankAccount", value);
+                    }}
                     placeholder="123456-12-123456"
                     inputMode="numeric"
                   />
@@ -724,6 +790,7 @@ export default function ExperiencedApplicantPage() {
                                 입사일 <span className="text-red-500">*</span>
                               </Label>
                               <DatePicker
+                                id={`startDate-${index}`}
                                 value={company.startDate}
                                 onChange={(date) =>
                                   updateCareer(index, "startDate", date)
@@ -736,6 +803,7 @@ export default function ExperiencedApplicantPage() {
                                 퇴사일 <span className="text-red-500">*</span>
                               </Label>
                               <DatePicker
+                                id={`endDate-${index}`}
                                 value={company.endDate}
                                 onChange={(date) =>
                                   updateCareer(index, "endDate", date)
@@ -745,27 +813,120 @@ export default function ExperiencedApplicantPage() {
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`termination-${index}`}
-                              checked={company.terminationConfirmed}
-                              onChange={(e) =>
-                                updateCareer(
-                                  index,
-                                  "terminationConfirmed",
-                                  e.target.checked
-                                )
-                              }
-                              className="rounded border-gray-300"
-                            />
-                            <Label
-                              htmlFor={`termination-${index}`}
-                              className="text-sm"
-                            >
-                              해당 보험사 말소 처리 완료 확인
+                          {/* 회사 업종 선택 */}
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">
+                              회사 업종 <span className="text-red-500">*</span>
                             </Label>
+                            <div className="flex space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id={`insurance-${index}`}
+                                  name={`company-type-${index}`}
+                                  checked={company.companyType === 'insurance'}
+                                  onChange={() => updateCareer(index, "companyType", "insurance")}
+                                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <Label htmlFor={`insurance-${index}`} className="text-sm">
+                                  보험사 (생명보험, 손해보험, 보험대리점 등)
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id={`financial-${index}`}
+                                  name={`company-type-${index}`}
+                                  checked={company.companyType === 'financial'}
+                                  onChange={() => updateCareer(index, "companyType", "financial")}
+                                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <Label htmlFor={`financial-${index}`} className="text-sm">
+                                  금융권 (은행, 증권사, 카드사, 캐피탈 등)
+                                </Label>
+                              </div>
+                            </div>
                           </div>
+
+                          {/* 보험사인 경우 말소 처리 상태 */}
+                          {company.companyType === 'insurance' && (
+                            <div className="space-y-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                              <Label className="text-sm font-medium">
+                                말소 처리 상태 <span className="text-red-500">*</span>
+                              </Label>
+                              <div className="space-y-2">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`termination-completed-${index}`}
+                                    name={`termination-status-${index}`}
+                                    checked={company.terminationStatus === 'completed'}
+                                    onChange={() => updateCareer(index, "terminationStatus", "completed")}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                  />
+                                  <Label htmlFor={`termination-completed-${index}`} className="text-sm">
+                                    말소 처리 완료
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`termination-progress-${index}`}
+                                    name={`termination-status-${index}`}
+                                    checked={company.terminationStatus === 'in_progress'}
+                                    onChange={() => updateCareer(index, "terminationStatus", "in_progress")}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                  />
+                                  <Label htmlFor={`termination-progress-${index}`} className="text-sm">
+                                    말소 처리 진행 중
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`termination-help-${index}`}
+                                    name={`termination-status-${index}`}
+                                    checked={company.terminationStatus === 'need_help'}
+                                    onChange={() => updateCareer(index, "terminationStatus", "need_help")}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                  />
+                                  <Label htmlFor={`termination-help-${index}`} className="text-sm">
+                                    말소 처리 도움 필요
+                                  </Label>
+                                </div>
+                              </div>
+
+                              {/* 말소 처리 진행 중인 경우 예정일 입력 */}
+                              {company.terminationStatus === 'in_progress' && (
+                                <div className="space-y-2 mt-3">
+                                  <Label className="text-sm font-medium">
+                                    말소 처리 완료 예정일 <span className="text-red-500">*</span>
+                                  </Label>
+                                  <DatePicker
+                                    id={`terminationDate-${index}`}
+                                    value={company.terminationDate || ''}
+                                    onChange={(date) => updateCareer(index, "terminationDate", date)}
+                                    placeholder="말소 처리 예정일 선택"
+                                    min={new Date().toISOString().split('T')[0]}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* 금융권인 경우 안내 메시지 */}
+                          {company.companyType === 'financial' && (
+                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs">ℹ</span>
+                                </div>
+                                <p className="text-sm text-blue-700">
+                                  금융권 출신은 말소 처리가 필요하지 않습니다.
+                                </p>
+                              </div>
+                            </div>
+                          )}
 
                           <div className="flex justify-end">
                             <Button

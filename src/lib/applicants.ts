@@ -19,6 +19,15 @@ export interface ApplicantFormData {
   documents_confirmed?: boolean
   document_preparation_date?: string
   applicant_type?: 'new' | 'experienced'
+  previousCompanies?: {
+    companyName: string
+    position: string
+    startDate: string
+    endDate: string
+    companyType: 'insurance' | 'financial'
+    terminationStatus?: 'completed' | 'in_progress' | 'need_help'
+    terminationDate?: string
+  }[]
 }
 
 export async function createApplicant(data: ApplicantFormData) {
@@ -60,13 +69,19 @@ export async function createApplicant(data: ApplicantFormData) {
       status: 'pending' as const
     }
 
-    // 4. 지원자 생성 - RPC 호출로 대체하거나 직접 SQL 실행
+    // 4. 요청 데이터 준비 (경력 정보 포함)
+    const requestData = {
+      ...applicantData,
+      previousCompanies: data.previousCompanies || []
+    }
+
+    // 5. 지원자 생성 - RPC 호출로 대체하거나 직접 SQL 실행
     const response = await fetch('/api/applicants', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(applicantData),
+      body: JSON.stringify(requestData),
     })
 
     if (!response.ok) {
@@ -107,6 +122,7 @@ export async function getApplicants() {
         applicant_type,
         status,
         submitted_at,
+        appointment_deadline,
         recruiters (
           name,
           team

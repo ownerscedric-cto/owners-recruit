@@ -26,6 +26,7 @@ export interface Database {
           deleted_at: string | null
           deletion_reason: string | null
           deleted_by: string | null
+          appointment_deadline: string | null
         }
         Insert: {
           id?: string
@@ -51,6 +52,7 @@ export interface Database {
           deleted_at?: string | null
           deletion_reason?: string | null
           deleted_by?: string | null
+          appointment_deadline?: string | null
         }
         Update: {
           id?: string
@@ -76,6 +78,7 @@ export interface Database {
           deleted_at?: string | null
           deletion_reason?: string | null
           deleted_by?: string | null
+          appointment_deadline?: string | null
         }
       }
       audit_logs: {
@@ -142,6 +145,11 @@ export interface Database {
           start_date: string
           end_date: string
           description: string | null
+          company_type: 'insurance' | 'financial'
+          termination_status: 'completed' | 'in_progress' | 'need_help' | null
+          termination_date: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
@@ -151,6 +159,11 @@ export interface Database {
           start_date: string
           end_date: string
           description?: string | null
+          company_type: 'insurance' | 'financial'
+          termination_status?: 'completed' | 'in_progress' | 'need_help' | null
+          termination_date?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -160,6 +173,11 @@ export interface Database {
           start_date?: string
           end_date?: string
           description?: string | null
+          company_type?: 'insurance' | 'financial'
+          termination_status?: 'completed' | 'in_progress' | 'need_help' | null
+          termination_date?: string | null
+          created_at?: string
+          updated_at?: string
         }
       }
       certificates: {
