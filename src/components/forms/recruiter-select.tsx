@@ -84,11 +84,11 @@ export function RecruiterSelect({
               {recruiters.length > 0 ? (
                 recruiters.map((recruiter) => (
                   <SelectItem key={recruiter.id} value={recruiter.name}>
-                    <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
                       <span className="font-medium">{recruiter.name}</span>
-                      {recruiter.team && (
-                        <span className="text-xs text-gray-500">{recruiter.team}</span>
-                      )}
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {recruiter.position}
+                      </span>
                     </div>
                   </SelectItem>
                 ))

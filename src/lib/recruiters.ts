@@ -3,11 +3,13 @@ export interface RecruiterData {
   email: string
   phone: string
   team: string
+  position?: '지점장' | '부지점장' | '팀장'
   active?: boolean
 }
 
 export interface Recruiter extends RecruiterData {
   id: string
+  position: '지점장' | '부지점장' | '팀장'
   active: boolean
   created_at: string
 }

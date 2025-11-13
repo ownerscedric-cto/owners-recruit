@@ -195,6 +195,7 @@ export interface Database {
           email: string
           phone: string
           team: string | null
+          position: '지점장' | '부지점장' | '팀장'
           active: boolean
           created_at: string
         }
@@ -204,6 +205,7 @@ export interface Database {
           email: string
           phone: string
           team?: string | null
+          position?: '지점장' | '부지점장' | '팀장'
           active?: boolean
           created_at?: string
         }
@@ -213,6 +215,7 @@ export interface Database {
           email?: string
           phone?: string
           team?: string | null
+          position?: '지점장' | '부지점장' | '팀장'
           active?: boolean
           created_at?: string
         }

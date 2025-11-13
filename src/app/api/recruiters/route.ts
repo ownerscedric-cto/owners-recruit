@@ -28,9 +28,23 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
 
+    // 직급별 정렬 (지점장 > 부지점장 > 팀장), 같은 직급 내에서는 생성일순
+    const positionOrder = { '지점장': 1, '부지점장': 2, '팀장': 3 }
+    const sortedData = data?.sort((a: any, b: any) => {
+      const aPosition = positionOrder[a.position as keyof typeof positionOrder] || 4
+      const bPosition = positionOrder[b.position as keyof typeof positionOrder] || 4
+
+      if (aPosition !== bPosition) {
+        return aPosition - bPosition
+      }
+
+      // 같은 직급이면 생성일순
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    })
+
     return NextResponse.json({
       success: true,
-      data
+      data: sortedData
     })
   } catch (error) {
     console.error('API Error in recruiters GET:', error)
@@ -49,7 +63,8 @@ export async function POST(request: NextRequest) {
     // 모집인 생성 시 기본적으로 활성 상태로 설정
     const recruiterData = {
       ...data,
-      active: data.active !== undefined ? data.active : true
+      active: data.active !== undefined ? data.active : true,
+      position: data.position || '팀장'  // 기본 직급을 팀장으로 설정
     }
 
     // @ts-ignore - Supabase 타입 정의 이슈로 인한 임시 우회

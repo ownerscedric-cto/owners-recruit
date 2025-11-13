@@ -47,7 +47,8 @@ export default function RecruitersManagement({ children }: RecruitersManagementP
     name: '',
     email: '',
     phone: '',
-    team: ''
+    team: '',
+    position: '팀장'  // 기본값을 팀장으로 설정
   })
 
   // 통계 데이터
@@ -83,7 +84,8 @@ export default function RecruitersManagement({ children }: RecruitersManagementP
       name: '',
       email: '',
       phone: '',
-      team: ''
+      team: '',
+      position: '팀장'  // 기본값을 팀장으로 설정
     })
     setSelectedRecruiter(null)
   }
@@ -239,7 +241,8 @@ export default function RecruitersManagement({ children }: RecruitersManagementP
       name: recruiter.name,
       email: recruiter.email,
       phone: recruiter.phone,
-      team: recruiter.team || ''
+      team: recruiter.team || '',
+      position: recruiter.position
     })
     setIsEditModalOpen(true)
   }
@@ -398,6 +401,24 @@ export default function RecruitersManagement({ children }: RecruitersManagementP
                         </Select>
                       </div>
                     </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="position" className="text-right">직급 <span className="text-red-500">*</span></Label>
+                      <div className="col-span-3">
+                        <Select
+                          value={formData.position}
+                          onValueChange={(value) => setFormData({...formData, position: value as '지점장' | '부지점장' | '팀장'})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="직급을 선택하세요" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="지점장">지점장</SelectItem>
+                            <SelectItem value="부지점장">부지점장</SelectItem>
+                            <SelectItem value="팀장">팀장</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
                   <DialogFooter>
                     <Button type="submit" onClick={handleCreate} disabled={isSubmitting}>
@@ -450,7 +471,12 @@ export default function RecruitersManagement({ children }: RecruitersManagementP
                       <TableRow key={recruiter.id} className={!recruiter.active ? "opacity-60" : ""}>
                         <TableCell className="font-medium">
                           <div>
-                            <div className="font-semibold">{recruiter.name}</div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{recruiter.name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {recruiter.position}
+                              </Badge>
+                            </div>
                             <div className="text-sm text-gray-500">{recruiter.email}</div>
                           </div>
                         </TableCell>
@@ -620,6 +646,24 @@ export default function RecruitersManagement({ children }: RecruitersManagementP
                         {team.name}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-position" className="text-right">직급 <span className="text-red-500">*</span></Label>
+              <div className="col-span-3">
+                <Select
+                  value={formData.position}
+                  onValueChange={(value) => setFormData({...formData, position: value as '지점장' | '부지점장' | '팀장'})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="직급을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="지점장">지점장</SelectItem>
+                    <SelectItem value="부지점장">부지점장</SelectItem>
+                    <SelectItem value="팀장">팀장</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
