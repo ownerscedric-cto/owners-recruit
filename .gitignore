@@ -41,3 +41,29 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+
+# Database utilities and temporary files
+check_tables.js
+execute_sql.js
+create_*.sql
+check-*.js
+*_temp.js
+*_test.js
+database_*.js
+
+# Environment and sensitive files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.key
+*.pem
+config.json
+secrets.json
+
+# Database dumps and backups
+*.sql.backup
+*.db
+*.sqlite
+*.sqlite3
