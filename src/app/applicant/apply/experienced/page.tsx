@@ -579,8 +579,14 @@ export default function ExperiencedApplicantPage() {
                     id="bankAccount"
                     value={formData.bankAccount}
                     onChange={(e) => {
+                      // 숫자와 하이픈만 허용
                       const value = e.target.value.replace(/[^0-9-]/g, '');
                       handleInputChange("bankAccount", value);
+                    }}
+                    onInput={(e) => {
+                      // 실시간으로 숫자와 하이픈만 허용
+                      const target = e.target as HTMLInputElement;
+                      target.value = target.value.replace(/[^0-9-]/g, '');
                     }}
                     placeholder="123456-12-123456"
                     inputMode="numeric"
