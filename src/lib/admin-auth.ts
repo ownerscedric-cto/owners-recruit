@@ -38,13 +38,16 @@ export function generateSessionToken(adminId: string): string {
 
 export function verifySessionToken(token: string): { adminId: string } | null {
   try {
+    console.log('Verifying token with secret length:', JWT_SECRET.length)
     const decoded = jwt.verify(token, JWT_SECRET) as any
+    console.log('Token decoded successfully, type:', decoded.type, 'adminId:', decoded.adminId)
     if (decoded.type !== 'admin_session') {
+      console.log('Invalid token type:', decoded.type)
       return null
     }
     return { adminId: decoded.adminId }
   } catch (error) {
-    // Token verification error
+    console.log('Token verification error:', error)
     return null
   }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createSupabaseServiceRoleClient } from './lib/supabase'
+import { validateAdminAccess } from './lib/admin-auth-edge'
 
 // 관리자 경로 확인
 function isAdminPath(pathname: string): boolean {
@@ -20,44 +20,13 @@ function requiresAuth(pathname: string): boolean {
 }
 
 // 관리자 세션 검증 (Edge Runtime 호환)
-async function validateAdminAccess(request: NextRequest): Promise<{ valid: boolean; admin?: any }> {
-  try {
-    // 쿠키에서 토큰 확인
-    const token = request.cookies.get('admin_token')?.value
-    console.log('Middleware cookie token:', token ? 'exists' : 'not found')
+async function validateAdminAccessMiddleware(request: NextRequest): Promise<{ valid: boolean; admin?: any }> {
+  const token = request.cookies.get('admin_token')?.value
+  const pathname = request.nextUrl.pathname
 
-    if (!token) {
-      console.log('Middleware: No token found')
-      return { valid: false }
-    }
+  console.log('Middleware cookie token:', token ? 'exists' : 'not found')
 
-    // API를 통해 토큰 검증
-    try {
-      const verifyUrl = new URL('/api/admin/verify', request.url)
-      const response = await fetch(verifyUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Cookie': request.headers.get('cookie') || ''
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Middleware validation result: success')
-        return { valid: true, admin: data.admin }
-      } else {
-        console.log('Middleware validation result: failed')
-        return { valid: false }
-      }
-    } catch (fetchError) {
-      console.log('Middleware API call failed:', fetchError)
-      return { valid: false }
-    }
-  } catch (error) {
-    console.error('Admin validation error:', error)
-    return { valid: false }
-  }
+  return await validateAdminAccess(token, pathname)
 }
 
 // 정적 파일 확인
@@ -90,43 +59,9 @@ function isAdminAccess(request: NextRequest): boolean {
          ip.startsWith('172.16.')
 }
 
-// 유지보수 모드 확인 (간단한 캐시와 함께)
-let maintenanceCache: { enabled: boolean; lastCheck: number } | null = null
-const CACHE_DURATION = 30000 // 30초
-
-async function isMaintenanceMode(): Promise<boolean> {
-  // 캐시 확인
-  if (maintenanceCache && Date.now() - maintenanceCache.lastCheck < CACHE_DURATION) {
-    return maintenanceCache.enabled
-  }
-
-  try {
-    const supabase = createSupabaseServiceRoleClient()
-
-    const { data, error } = await (supabase as any)
-      .from('system_settings')
-      .select('value')
-      .eq('key', 'maintenance_mode')
-      .single()
-
-    if (error) {
-      console.error('Middleware: Error checking maintenance mode:', error)
-      return false
-    }
-
-    const isEnabled = data?.value === 'true'
-
-    // 캐시 업데이트
-    maintenanceCache = {
-      enabled: isEnabled,
-      lastCheck: Date.now()
-    }
-
-    return isEnabled
-  } catch (error) {
-    console.error('Middleware: Error in maintenance mode check:', error)
-    return false
-  }
+// 유지보수 모드 확인 (환경 변수 사용)
+function isMaintenanceMode(): boolean {
+  return process.env.MAINTENANCE_MODE === 'true'
 }
 
 export async function middleware(request: NextRequest) {
@@ -145,7 +80,7 @@ export async function middleware(request: NextRequest) {
   try {
     // 관리자 인증이 필요한 경로 확인
     if (requiresAuth(pathname)) {
-      const { valid, admin } = await validateAdminAccess(request)
+      const { valid, admin } = await validateAdminAccessMiddleware(request)
 
       if (!valid) {
         // 인증되지 않은 경우 로그인 페이지로 리다이렉트
@@ -154,20 +89,12 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl)
       }
 
-      // 권한 확인
-      if (pathname.startsWith('/admin') && admin.role !== 'system_admin') {
-        // admin 페이지는 system_admin만 접근 가능
-        return NextResponse.redirect(new URL('/manager', request.url))
-      }
-
-      if (pathname.startsWith('/manager') && !['hr_manager', 'system_admin'].includes(admin.role)) {
-        // manager 페이지는 hr_manager, system_admin 접근 가능
-        return NextResponse.redirect(new URL('/login', request.url))
-      }
+      // 권한 확인은 이미 validateAdminAccess에서 처리됨
+      // 추가 권한 확인이 필요한 경우만 여기서 처리
     }
 
     // 유지보수 모드 확인
-    const maintenanceEnabled = await isMaintenanceMode()
+    const maintenanceEnabled = isMaintenanceMode()
 
     if (maintenanceEnabled) {
       // 관리자 경로이거나 관리자 IP면 통과
@@ -206,5 +133,5 @@ export const config = {
   ],
 }
 
-// Node.js runtime을 사용하도록 설정
-export const runtime = 'nodejs'
+// Edge runtime을 사용하도록 설정 (더 빠름)
+export const runtime = 'experimental-edge'
