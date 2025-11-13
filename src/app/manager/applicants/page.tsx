@@ -85,11 +85,6 @@ export default function ManagerApplicantsPage() {
   const [showDeleted, setShowDeleted] = useState(false)
 
   useEffect(() => {
-    // 디버깅: 관리자 정보 출력
-    console.log('현재 관리자 정보:', admin)
-    console.log('관리자 역할:', admin?.role)
-    console.log('삭제 권한 체크:', admin?.role === 'system_admin' || admin?.role === 'hr_manager')
-
     fetchApplicants()
     fetchRecruiters()
   }, [admin])
@@ -385,17 +380,6 @@ export default function ManagerApplicantsPage() {
   return (
     <ManagerLayout title="지원자 관리" currentPage="applicants">
       <div className="space-y-6">
-        {/* 디버깅: 관리자 정보 표시 */}
-        {process.env.NODE_ENV === 'development' && admin && (
-          <Card className="bg-blue-50 border-blue-200">
-            <CardHeader>
-              <CardTitle className="text-sm text-blue-800">디버깅 정보</CardTitle>
-              <CardDescription className="text-blue-600">
-                관리자: {admin.username} ({admin.role}) | 삭제 권한: {(admin.role === 'system_admin' || admin.role === 'hr_manager') ? '✅' : '❌'}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        )}
         {/* 상단 필터 및 액션 */}
         <Card>
           <CardHeader>
@@ -571,7 +555,7 @@ export default function ManagerApplicantsPage() {
                                 className="bg-red-600 hover:bg-red-700 text-white border border-red-600"
                                 title="지원자 삭제"
                               >
-                                🗑️ 삭제
+                                삭제
                               </Button>
                             )}
                             {(applicant.status === 'rejected' || applicant.status === 'completed') && (
