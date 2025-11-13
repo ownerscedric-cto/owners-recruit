@@ -345,6 +345,44 @@ export default function ManagerApplicantsPage() {
       }
     };
 
+    // 경력 정보 가져오기 (경력자인 경우)
+    let careerInfoText = '';
+    if (applicant.applicant_type === 'experienced') {
+      try {
+        const careerResult = await getCareersByApplicant(applicant.id);
+        if (careerResult.success && careerResult.data.length > 0) {
+          careerInfoText = '\n\n<경력 사항>\n';
+          (careerResult.data as Career[]).forEach((career, index) => {
+            careerInfoText += `${index + 1}. 회사명: ${career.company}
+   직책: ${career.position}
+   근무기간: ${formatDate(career.start_date)} ~ ${formatDate(career.end_date)}
+   회사유형: ${career.company_type === 'insurance' ? '보험회사' : '금융회사'}`;
+
+            if (career.termination_status) {
+              const terminationStatusText =
+                career.termination_status === 'completed' ? '완료' :
+                career.termination_status === 'in_progress' ? '진행중' : '도움 필요';
+              careerInfoText += `\n   말소 처리: ${terminationStatusText}`;
+
+              if (career.termination_date) {
+                careerInfoText += `\n   말소 예정일: ${formatDate(career.termination_date)}`;
+              }
+            }
+
+            if (career.description) {
+              careerInfoText += `\n   설명: ${career.description}`;
+            }
+
+            careerInfoText += '\n\n';
+          });
+        } else {
+          careerInfoText = '\n\n<경력 사항>\n등록된 경력 정보가 없습니다.\n\n';
+        }
+      } catch (error) {
+        careerInfoText = '\n\n<경력 사항>\n경력 정보를 불러올 수 없습니다.\n\n';
+      }
+    }
+
     // 시험 신청 정보 가져오기
     let examApplicationsText = '';
     try {
@@ -385,7 +423,7 @@ export default function ManagerApplicantsPage() {
 8. 생명교육이수일: ${formatDate(applicant.life_education_date)}
 9. 학력(최종학교명): ${applicant.final_school || ''}
 10. 신입/경력 여부: ${applicant.applicant_type === 'new' ? '신입' : '경력'}
-11. 도입자: ${applicant.recruiters?.name || '없음'}${applicant.recruiters?.team ? ` (${applicant.recruiters.team})` : ''}${examApplicationsText}
+11. 도입자: ${applicant.recruiters?.name || '없음'}${applicant.recruiters?.team ? ` (${applicant.recruiters.team})` : ''}${careerInfoText}${examApplicationsText}
 
 ---
 처리 상태: ${getStatusText(applicant.status)}
