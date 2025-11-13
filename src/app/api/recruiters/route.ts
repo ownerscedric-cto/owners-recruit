@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       query = query.eq('active', true)
     }
 
-    const { data, error } = await query.order('name', { ascending: true })
+    const { data, error } = await query.order('created_at', { ascending: true })
 
     if (error) {
       console.error('API Error fetching recruiters:', error)
