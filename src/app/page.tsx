@@ -54,61 +54,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="text-center">
-                <Users className="mx-auto h-12 w-12 text-indigo-600" />
-                <CardTitle className="text-lg">편리한 신청</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center">
-                  언제 어디서나 웹을 통해 간편하게 입사 신청이 가능합니다
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="text-center">
-                <Shield className="mx-auto h-12 w-12 text-indigo-600" />
-                <CardTitle className="text-lg">보안 강화</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center">
-                  개인정보 암호화와 안전한 전송으로 데이터를 보호합니다
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="text-center">
-                <Clock className="mx-auto h-12 w-12 text-indigo-600" />
-                <CardTitle className="text-lg">실시간 추적</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center">
-                  입사 진행 상황을 실시간으로 확인할 수 있습니다
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="text-center">
-                <FileCheck className="mx-auto h-12 w-12 text-indigo-600" />
-                <CardTitle className="text-lg">자동화 처리</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center">
-                  서류 검토와 승인 과정이 자동화되어 빠른 처리가 가능합니다
-                </CardDescription>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -170,6 +115,61 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="text-center">
+                <Users className="mx-auto h-12 w-12 text-indigo-600" />
+                <CardTitle className="text-lg">편리한 신청</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-center">
+                  언제 어디서나 웹을 통해 간편하게 입사 신청이 가능합니다
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="text-center">
+                <Shield className="mx-auto h-12 w-12 text-indigo-600" />
+                <CardTitle className="text-lg">보안 강화</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-center">
+                  개인정보 암호화와 안전한 전송으로 데이터를 보호합니다
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="text-center">
+                <Clock className="mx-auto h-12 w-12 text-indigo-600" />
+                <CardTitle className="text-lg">실시간 추적</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-center">
+                  입사 진행 상황을 실시간으로 확인할 수 있습니다
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="text-center">
+                <FileCheck className="mx-auto h-12 w-12 text-indigo-600" />
+                <CardTitle className="text-lg">자동화 처리</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-center">
+                  서류 검토와 승인 과정이 자동화되어 빠른 처리가 가능합니다
+                </CardDescription>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
