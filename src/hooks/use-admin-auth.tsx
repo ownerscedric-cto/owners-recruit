@@ -98,6 +98,11 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = async () => {
+    console.log('🚪 [Auth] Starting logout process')
+
+    // 즉시 상태를 클리어하여 UI 업데이트
+    setAdmin(null)
+
     try {
       const token = localStorage.getItem('admin_token')
       if (token) {
@@ -111,10 +116,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
+      // 토큰 정리
       localStorage.removeItem('admin_token')
       // 쿠키도 함께 삭제
       document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      setAdmin(null)
+
+      console.log('🧹 [Auth] Tokens cleared, redirecting to login')
       router.push('/login')
     }
   }
