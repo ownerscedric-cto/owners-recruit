@@ -5,6 +5,15 @@ import { Database } from '@/types/database'
 
 export type AdminUser = Database['public']['Tables']['admins']['Row']
 
+type SessionWithAdmin = {
+  id: string
+  admin_id: string
+  session_token: string
+  expires_at: string
+  created_at: string
+  admins: AdminUser
+}
+
 /**
  * Edge Runtime compatible Supabase client
  */
@@ -53,8 +62,9 @@ export async function validateAdminSessionEdge(token: string): Promise<AdminUser
       return null
     }
 
-    console.log('✅ [Edge Auth] Session validated for user:', (session.admins as AdminUser).username)
-    return session.admins as AdminUser
+    const sessionWithAdmin = session as SessionWithAdmin
+    console.log('✅ [Edge Auth] Session validated for user:', sessionWithAdmin.admins.username)
+    return sessionWithAdmin.admins
   } catch (error) {
     console.error('❌ [Edge Auth] Session validation error:', error)
     return null
