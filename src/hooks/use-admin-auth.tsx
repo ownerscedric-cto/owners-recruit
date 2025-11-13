@@ -19,7 +19,6 @@ const AdminAuthContext = createContext<AdminAuthContextType | null>(null)
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [admin, setAdmin] = useState<AdminUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
 
   const checkAuth = async () => {
     try {
@@ -146,8 +145,10 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       console.log('  - localStorage token:', remainingToken ? 'STILL EXISTS!' : 'cleared ✓')
       console.log('  - cookie token:', remainingCookie ? 'STILL EXISTS!' : 'cleared ✓')
 
-      console.log('🧹 [Auth] Tokens cleared, redirecting to login')
-      router.push('/login')
+      console.log('🧹 [Auth] Tokens cleared, forcing logout redirect')
+
+      // 즉시 강제 리디렉션 - 새로운 요청이 미들웨어를 통과하도록 함
+      window.location.replace('/login')
     }
   }
 

@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAdminAuth } from '@/hooks/use-admin-auth'
@@ -33,7 +35,16 @@ const navigation = [
 ]
 
 export function ManagerLayout({ children, title, currentPage }: ManagerLayoutProps) {
-  const { admin, logout } = useAdminAuth()
+  const { admin, logout, loading } = useAdminAuth()
+  const router = useRouter()
+
+  // 로딩이 완료된 후 admin이 null이면 즉시 로그인 페이지로 리디렉션
+  useEffect(() => {
+    if (!loading && admin === null) {
+      console.log('🚪 [ManagerLayout] No admin after loading, redirecting to login')
+      window.location.replace('/login')
+    }
+  }, [admin, loading])
 
   const handleLogout = async () => {
     if (confirm('정말 로그아웃 하시겠습니까?')) {
