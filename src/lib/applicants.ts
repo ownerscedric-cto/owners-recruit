@@ -112,16 +112,15 @@ export async function getApplicants() {
           team
         )
       `)
+      .is('deleted_at', null)  // Only fetch non-deleted applicants
       .order('submitted_at', { ascending: false })
 
     if (error) {
-      // Error fetching applicants
       throw new Error(`지원자 목록 조회에 실패했습니다: ${error.message}`)
     }
 
     return { success: true, data }
   } catch (error) {
-    // Error in getApplicants
     return {
       success: false,
       error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'

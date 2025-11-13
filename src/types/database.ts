@@ -23,6 +23,9 @@ export interface Database {
           submitted_at: string
           updated_at: string
           created_at: string
+          deleted_at: string | null
+          deletion_reason: string | null
+          deleted_by: string | null
         }
         Insert: {
           id?: string
@@ -45,6 +48,9 @@ export interface Database {
           submitted_at?: string
           updated_at?: string
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
+          deleted_by?: string | null
         }
         Update: {
           id?: string
@@ -66,6 +72,38 @@ export interface Database {
           recruiter_id?: string | null
           submitted_at?: string
           updated_at?: string
+          created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
+          deleted_by?: string | null
+        }
+      }
+      audit_logs: {
+        Row: {
+          id: string
+          entity_type: string
+          entity_id: string
+          action: string
+          performed_by: string
+          details: Record<string, any> | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          entity_type: string
+          entity_id: string
+          action: string
+          performed_by: string
+          details?: Record<string, any> | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          entity_type?: string
+          entity_id?: string
+          action?: string
+          performed_by?: string
+          details?: Record<string, any> | null
           created_at?: string
         }
       }

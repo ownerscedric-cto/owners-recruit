@@ -8,12 +8,15 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { getApplicants, updateApplicantStatus, updateApplicantRecruiter } from '@/lib/applicants'
 import { getActiveRecruiters, type Recruiter } from '@/lib/recruiters'
 import { getExamApplicationsByApplicant } from '@/lib/exam-applications'
 import { Database } from '@/types/database'
 import { decryptResidentNumber } from '@/lib/encryption'
+import { useAdminAuth } from '@/hooks/use-admin-auth'
 
 type ApplicantStatus = Database['public']['Tables']['applicants']['Row']['status']
 import {
@@ -31,7 +34,9 @@ import {
   MapPin,
   Calendar,
   Building,
-  X
+  X,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react'
 
 interface Applicant {
@@ -59,6 +64,7 @@ interface Applicant {
 }
 
 export default function ManagerApplicantsPage() {
+  const { admin } = useAdminAuth()
   const [applicants, setApplicants] = useState<Applicant[]>([])
   const [filteredApplicants, setFilteredApplicants] = useState<Applicant[]>([])
   const [loading, setLoading] = useState(true)
@@ -72,11 +78,16 @@ export default function ManagerApplicantsPage() {
   const [selectedRecruiter, setSelectedRecruiter] = useState<string>('')
   const [examApplications, setExamApplications] = useState<any[]>([])
   const [loadingExamApplications, setLoadingExamApplications] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteReason, setDeleteReason] = useState('')
+  const [applicantToDelete, setApplicantToDelete] = useState<Applicant | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleted, setShowDeleted] = useState(false)
 
   useEffect(() => {
     fetchApplicants()
     fetchRecruiters()
-  }, [])
+  }, [admin])
 
   useEffect(() => {
     // 검색 및 필터링 로직
@@ -164,6 +175,48 @@ export default function ManagerApplicantsPage() {
       }
     } catch (error) {
       // 모집인 목록 조회 실패
+    }
+  }
+
+  const handleDeleteClick = (applicant: Applicant) => {
+    setApplicantToDelete(applicant)
+    setShowDeleteModal(true)
+    setDeleteReason('')
+  }
+
+  const handleDeleteApplicant = async () => {
+    if (!applicantToDelete || !deleteReason.trim()) {
+      alert('삭제 사유를 입력해주세요.')
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/applicants/${applicantToDelete.id}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deletion_reason: deleteReason,
+          deleted_by: admin?.username || 'unknown'
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert('지원자가 삭제되었습니다.')
+        setShowDeleteModal(false)
+        setApplicantToDelete(null)
+        setDeleteReason('')
+        // 목록 새로고침
+        await fetchApplicants()
+      } else {
+        alert('삭제 실패: ' + result.error)
+      }
+    } catch (error) {
+      alert('삭제 중 오류가 발생했습니다.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -493,6 +546,18 @@ export default function ManagerApplicantsPage() {
                                 완료
                               </Button>
                             )}
+                            {/* 삭제 버튼 - 관리자만 표시 */}
+                            {(admin?.role === 'system_admin' || admin?.role === 'hr_manager') && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteClick(applicant)}
+                                className="text-red-600 hover:text-red-700"
+                                title="지원자 삭제"
+                              >
+                                삭제
+                              </Button>
+                            )}
                             {(applicant.status === 'rejected' || applicant.status === 'completed') && (
                               <Button
                                 size="sm"
@@ -819,6 +884,64 @@ export default function ManagerApplicantsPage() {
                 )}
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* 삭제 확인 모달 */}
+        <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                지원자 삭제 확인
+              </DialogTitle>
+              <DialogDescription>
+                정말 이 지원자를 삭제하시겠습니까?
+                {applicantToDelete && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="font-medium">지원자: {applicantToDelete.name}</p>
+                    <p className="text-sm text-gray-600">이메일: {applicantToDelete.email}</p>
+                    <p className="text-sm text-gray-600">전화번호: {applicantToDelete.phone}</p>
+                  </div>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="delete-reason">
+                  삭제 사유 <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="delete-reason"
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  placeholder="삭제 사유를 입력해주세요 (필수)"
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="text-sm text-gray-500">
+                ⚠️ 삭제된 데이터는 복구가 가능하나, 기록은 남습니다.
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setApplicantToDelete(null)
+                  setDeleteReason('')
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteApplicant}
+                disabled={!deleteReason.trim() || deleting}
+              >
+                {deleting ? '삭제 중...' : '삭제'}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
