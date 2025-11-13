@@ -264,8 +264,14 @@ function ApplicantStatusContent() {
                 <Label htmlFor="searchPhone">연락처 <span className="text-red-500">*</span></Label>
                 <Input
                   id="searchPhone"
+                  inputMode="numeric"
                   value={searchPhone}
-                  onChange={(e) => setSearchPhone(e.target.value)}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/\D/g, '')
+                    if (cleaned.length <= 11) {
+                      setSearchPhone(cleaned)
+                    }
+                  }}
                   placeholder="010-1234-5678"
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
