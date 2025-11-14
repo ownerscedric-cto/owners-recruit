@@ -60,8 +60,8 @@ interface ExperiencedApplicantFormData {
     position: string;
     startDate: string;
     endDate: string;
-    companyType: 'insurance' | 'financial';
-    terminationStatus?: 'completed' | 'in_progress' | 'need_help';
+    companyType: "insurance" | "financial";
+    terminationStatus?: "completed" | "in_progress" | "need_help";
     terminationDate?: string;
   }[];
 
@@ -84,12 +84,18 @@ const steps = [
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case 'pending': return '대기';
-    case 'reviewing': return '검토중';
-    case 'approved': return '승인';
-    case 'rejected': return '반려';
-    case 'completed': return '완료';
-    default: return '알 수 없음';
+    case "pending":
+      return "대기";
+    case "reviewing":
+      return "검토중";
+    case "approved":
+      return "승인";
+    case "rejected":
+      return "반려";
+    case "completed":
+      return "완료";
+    default:
+      return "알 수 없음";
   }
 };
 
@@ -99,7 +105,11 @@ export default function ExperiencedApplicantPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isDuplicateFound, setIsDuplicateFound] = useState(false);
-  const [duplicateData, setDuplicateData] = useState<{name: string, phone: string, status: string} | null>(null);
+  const [duplicateData, setDuplicateData] = useState<{
+    name: string;
+    phone: string;
+    status: string;
+  } | null>(null);
   const [formData, setFormData] = useState<ExperiencedApplicantFormData>({
     name: "",
     residentNumber: "",
@@ -111,15 +121,17 @@ export default function ExperiencedApplicantPage() {
     lifeInsurancePassDate: "",
     lifeEducationDate: "",
     finalSchool: "",
-    previousCompanies: [{
-      companyName: "",
-      position: "",
-      startDate: "",
-      endDate: "",
-      companyType: "insurance" as const,
-      terminationStatus: undefined,
-      terminationDate: "",
-    }],
+    previousCompanies: [
+      {
+        companyName: "",
+        position: "",
+        startDate: "",
+        endDate: "",
+        companyType: "insurance" as const,
+        terminationStatus: undefined,
+        terminationDate: "",
+      },
+    ],
     documentsConfirmed: false,
     documentPreparationDate: "",
     recruiterName: "",
@@ -131,7 +143,7 @@ export default function ExperiencedApplicantPage() {
     if (duplicateData) {
       const params = new URLSearchParams({
         name: duplicateData.name,
-        phone: duplicateData.phone
+        phone: duplicateData.phone,
       });
       router.push(`/applicant/status?${params.toString()}`);
     }
@@ -143,15 +155,18 @@ export default function ExperiencedApplicantPage() {
     }
 
     try {
-      const result = await checkDuplicateApplicant(formData.name, formData.phone);
+      const result = await checkDuplicateApplicant(
+        formData.name,
+        formData.phone
+      );
       if (result.success) {
         return result;
       } else {
-        alert(result.error || '중복 확인 중 오류가 발생했습니다.');
+        alert(result.error || "중복 확인 중 오류가 발생했습니다.");
         return false;
       }
     } catch (error) {
-      alert('중복 확인 중 오류가 발생했습니다.');
+      alert("중복 확인 중 오류가 발생했습니다.");
       return false;
     }
   };
@@ -196,7 +211,7 @@ export default function ExperiencedApplicantPage() {
         setDuplicateData({
           name: formData.name,
           phone: formData.phone,
-          status: getStatusText(existingApplicant?.status || '알 수 없음')
+          status: getStatusText(existingApplicant?.status || "알 수 없음"),
         });
         setIsDuplicateFound(true);
         return;
@@ -221,24 +236,32 @@ export default function ExperiencedApplicantPage() {
 
     // 4단계(경력정보)에서 경력 입력 검증
     if (currentStep === 4) {
-      if (!formData.previousCompanies || formData.previousCompanies.length === 0) {
+      if (
+        !formData.previousCompanies ||
+        formData.previousCompanies.length === 0
+      ) {
         alert("경력자의 경우 이전 보험회사 경력을 최소 1개 이상 입력해주세요.");
         return;
       }
 
       // 입력된 경력 정보가 완전한지 확인
-      const hasIncompleteCareer = formData.previousCompanies.some(career =>
-        !career.companyName.trim() ||
-        !career.position.trim() ||
-        !career.startDate ||
-        !career.endDate ||
-        !career.companyType ||
-        (career.companyType === 'insurance' && !career.terminationStatus) ||
-        (career.companyType === 'insurance' && career.terminationStatus === 'in_progress' && !career.terminationDate)
+      const hasIncompleteCareer = formData.previousCompanies.some(
+        (career) =>
+          !career.companyName.trim() ||
+          !career.position.trim() ||
+          !career.startDate ||
+          !career.endDate ||
+          !career.companyType ||
+          (career.companyType === "insurance" && !career.terminationStatus) ||
+          (career.companyType === "insurance" &&
+            career.terminationStatus === "in_progress" &&
+            !career.terminationDate)
       );
 
       if (hasIncompleteCareer) {
-        alert("모든 경력 정보를 완전히 입력해주세요 (회사명, 직급, 재직 기간, 업종 구분 필수 / 보험사의 경우 말소 처리 상태 필수).");
+        alert(
+          "모든 경력 정보를 완전히 입력해주세요 (회사명, 직급, 재직 기간, 업종 구분 필수 / 보험사의 경우 말소 처리 상태 필수)."
+        );
         return;
       }
     }
@@ -282,7 +305,7 @@ export default function ExperiencedApplicantPage() {
           life_education_date: formData.lifeEducationDate,
           documents_confirmed: formData.documentsConfirmed,
           document_preparation_date: formData.documentPreparationDate,
-          applicant_type: 'experienced' as const,
+          applicant_type: "experienced" as const,
           previousCompanies: formData.previousCompanies,
         };
 
@@ -410,9 +433,16 @@ export default function ExperiencedApplicantPage() {
               <div className="bg-white p-4 rounded-lg border border-amber-200">
                 <h4 className="font-medium text-gray-900 mb-2">신청자 정보</h4>
                 <div className="space-y-1 text-sm text-gray-600">
-                  <p><span className="font-medium">이름:</span> {duplicateData.name}</p>
-                  <p><span className="font-medium">연락처:</span> {duplicateData.phone}</p>
-                  <p><span className="font-medium">현재 상태:</span>
+                  <p>
+                    <span className="font-medium">이름:</span>{" "}
+                    {duplicateData.name}
+                  </p>
+                  <p>
+                    <span className="font-medium">연락처:</span>{" "}
+                    {duplicateData.phone}
+                  </p>
+                  <p>
+                    <span className="font-medium">현재 상태:</span>
                     <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
                       {duplicateData.status}
                     </span>
@@ -429,10 +459,7 @@ export default function ExperiencedApplicantPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  onClick={handleGoToStatus}
-                  className="flex-1"
-                >
+                <Button onClick={handleGoToStatus} className="flex-1">
                   진행 상황 확인하기
                 </Button>
                 <Button
@@ -559,7 +586,9 @@ export default function ExperiencedApplicantPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <RecruiterSelect
                     value={formData.recruiterName}
-                    onChange={(value) => handleInputChange("recruiterName", value)}
+                    onChange={(value) =>
+                      handleInputChange("recruiterName", value)
+                    }
                     required={false}
                     description="등록된 모집자 중에서 선택해주세요 (선택사항)"
                   />
@@ -580,13 +609,13 @@ export default function ExperiencedApplicantPage() {
                     value={formData.bankAccount}
                     onChange={(e) => {
                       // 숫자와 하이픈만 허용
-                      const value = e.target.value.replace(/[^0-9-]/g, '');
+                      const value = e.target.value.replace(/[^0-9-]/g, "");
                       handleInputChange("bankAccount", value);
                     }}
                     onInput={(e) => {
                       // 실시간으로 숫자와 하이픈만 허용
                       const target = e.target as HTMLInputElement;
-                      target.value = target.value.replace(/[^0-9-]/g, '');
+                      target.value = target.value.replace(/[^0-9-]/g, "");
                     }}
                     placeholder="123456-12-123456"
                     inputMode="numeric"
@@ -643,7 +672,6 @@ export default function ExperiencedApplicantPage() {
                     />
                   </div>
                 </div>
-
               </div>
             )}
 
@@ -680,13 +708,14 @@ export default function ExperiencedApplicantPage() {
                       }
                       placeholder="생명보험 합격일 선택"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    {/* <p className="text-xs text-gray-500 mt-1">
                       3년 이내 발급된 합격증만 유효
-                    </p>
+                    </p> */}
                   </div>
                   <div>
                     <Label htmlFor="lifeEducationDate">
-                      생명교육 이수일 <span className="text-red-500">*</span>
+                      생명교육 이수일 (1년 이내 수료증만 유효){" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <DatePicker
                       id="lifeEducationDate"
@@ -695,9 +724,19 @@ export default function ExperiencedApplicantPage() {
                         handleInputChange("lifeEducationDate", date)
                       }
                       placeholder="생명교육 이수일 선택"
+                      min={(() => {
+                        const today = new Date();
+                        const elevenMonthsAgo = new Date(
+                          today.getFullYear(),
+                          today.getMonth() - 11,
+                          today.getDate() - 14
+                        );
+                        return elevenMonthsAgo.toISOString().split("T")[0];
+                      })()}
+                      max={new Date().toISOString().split("T")[0]}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      보험연수원 수료증 기준
+                      1년 이내 이수한 수료증만 유효합니다
                     </p>
                   </div>
                 </div>
@@ -758,7 +797,8 @@ export default function ExperiencedApplicantPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <Label>
-                                보험회사명 <span className="text-red-500">*</span>
+                                보험회사명{" "}
+                                <span className="text-red-500">*</span>
                               </Label>
                               <Input
                                 value={company.companyName}
@@ -774,7 +814,8 @@ export default function ExperiencedApplicantPage() {
                             </div>
                             <div>
                               <Label>
-                                직급/직책 <span className="text-red-500">*</span>
+                                직급/직책{" "}
+                                <span className="text-red-500">*</span>
                               </Label>
                               <Input
                                 value={company.position}
@@ -830,11 +871,20 @@ export default function ExperiencedApplicantPage() {
                                   type="radio"
                                   id={`insurance-${index}`}
                                   name={`company-type-${index}`}
-                                  checked={company.companyType === 'insurance'}
-                                  onChange={() => updateCareer(index, "companyType", "insurance")}
+                                  checked={company.companyType === "insurance"}
+                                  onChange={() =>
+                                    updateCareer(
+                                      index,
+                                      "companyType",
+                                      "insurance"
+                                    )
+                                  }
                                   className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                 />
-                                <Label htmlFor={`insurance-${index}`} className="text-sm">
+                                <Label
+                                  htmlFor={`insurance-${index}`}
+                                  className="text-sm"
+                                >
                                   보험사 (생명보험, 손해보험, 보험대리점 등)
                                 </Label>
                               </div>
@@ -843,22 +893,33 @@ export default function ExperiencedApplicantPage() {
                                   type="radio"
                                   id={`financial-${index}`}
                                   name={`company-type-${index}`}
-                                  checked={company.companyType === 'financial'}
-                                  onChange={() => updateCareer(index, "companyType", "financial")}
+                                  checked={company.companyType === "financial"}
+                                  onChange={() =>
+                                    updateCareer(
+                                      index,
+                                      "companyType",
+                                      "financial"
+                                    )
+                                  }
                                   className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                 />
-                                <Label htmlFor={`financial-${index}`} className="text-sm">
-                                  금융권 (은행, 증권사, 카드사, 캐피탈 등)
+                                <Label
+                                  htmlFor={`financial-${index}`}
+                                  className="text-sm"
+                                >
+                                  {/* 금융권 (은행, 증권사, 카드사, 캐피탈 등) */}
+                                  은행권
                                 </Label>
                               </div>
                             </div>
                           </div>
 
                           {/* 보험사인 경우 말소 처리 상태 */}
-                          {company.companyType === 'insurance' && (
+                          {company.companyType === "insurance" && (
                             <div className="space-y-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
                               <Label className="text-sm font-medium">
-                                말소 처리 상태 <span className="text-red-500">*</span>
+                                말소 처리 상태{" "}
+                                <span className="text-red-500">*</span>
                               </Label>
                               <div className="space-y-2">
                                 <div className="flex items-center space-x-2">
@@ -866,11 +927,22 @@ export default function ExperiencedApplicantPage() {
                                     type="radio"
                                     id={`termination-completed-${index}`}
                                     name={`termination-status-${index}`}
-                                    checked={company.terminationStatus === 'completed'}
-                                    onChange={() => updateCareer(index, "terminationStatus", "completed")}
+                                    checked={
+                                      company.terminationStatus === "completed"
+                                    }
+                                    onChange={() =>
+                                      updateCareer(
+                                        index,
+                                        "terminationStatus",
+                                        "completed"
+                                      )
+                                    }
                                     className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                   />
-                                  <Label htmlFor={`termination-completed-${index}`} className="text-sm">
+                                  <Label
+                                    htmlFor={`termination-completed-${index}`}
+                                    className="text-sm"
+                                  >
                                     말소 처리 완료
                                   </Label>
                                 </div>
@@ -879,11 +951,23 @@ export default function ExperiencedApplicantPage() {
                                     type="radio"
                                     id={`termination-progress-${index}`}
                                     name={`termination-status-${index}`}
-                                    checked={company.terminationStatus === 'in_progress'}
-                                    onChange={() => updateCareer(index, "terminationStatus", "in_progress")}
+                                    checked={
+                                      company.terminationStatus ===
+                                      "in_progress"
+                                    }
+                                    onChange={() =>
+                                      updateCareer(
+                                        index,
+                                        "terminationStatus",
+                                        "in_progress"
+                                      )
+                                    }
                                     className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                   />
-                                  <Label htmlFor={`termination-progress-${index}`} className="text-sm">
+                                  <Label
+                                    htmlFor={`termination-progress-${index}`}
+                                    className="text-sm"
+                                  >
                                     말소 처리 진행 중
                                   </Label>
                                 </div>
@@ -892,28 +976,46 @@ export default function ExperiencedApplicantPage() {
                                     type="radio"
                                     id={`termination-help-${index}`}
                                     name={`termination-status-${index}`}
-                                    checked={company.terminationStatus === 'need_help'}
-                                    onChange={() => updateCareer(index, "terminationStatus", "need_help")}
+                                    checked={
+                                      company.terminationStatus === "need_help"
+                                    }
+                                    onChange={() =>
+                                      updateCareer(
+                                        index,
+                                        "terminationStatus",
+                                        "need_help"
+                                      )
+                                    }
                                     className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                   />
-                                  <Label htmlFor={`termination-help-${index}`} className="text-sm">
+                                  <Label
+                                    htmlFor={`termination-help-${index}`}
+                                    className="text-sm"
+                                  >
                                     말소 처리 도움 필요
                                   </Label>
                                 </div>
                               </div>
 
                               {/* 말소 처리 진행 중인 경우 예정일 입력 */}
-                              {company.terminationStatus === 'in_progress' && (
+                              {company.terminationStatus === "in_progress" && (
                                 <div className="space-y-2 mt-3">
                                   <Label className="text-sm font-medium">
-                                    말소 처리 완료 예정일 <span className="text-red-500">*</span>
+                                    말소 처리 완료 예정일{" "}
+                                    <span className="text-red-500">*</span>
                                   </Label>
                                   <DatePicker
                                     id={`terminationDate-${index}`}
-                                    value={company.terminationDate || ''}
-                                    onChange={(date) => updateCareer(index, "terminationDate", date)}
+                                    value={company.terminationDate || ""}
+                                    onChange={(date) =>
+                                      updateCareer(
+                                        index,
+                                        "terminationDate",
+                                        date
+                                      )
+                                    }
                                     placeholder="말소 처리 예정일 선택"
-                                    min={new Date().toISOString().split('T')[0]}
+                                    min={new Date().toISOString().split("T")[0]}
                                   />
                                 </div>
                               )}
@@ -921,14 +1023,18 @@ export default function ExperiencedApplicantPage() {
                           )}
 
                           {/* 금융권인 경우 안내 메시지 */}
-                          {company.companyType === 'financial' && (
+                          {company.companyType === "financial" && (
                             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                               <div className="flex items-center space-x-2">
                                 <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                                   <span className="text-white text-xs">ℹ</span>
                                 </div>
                                 <p className="text-sm text-blue-700">
-                                  금융권 출신은 말소 처리가 필요하지 않습니다.
+                                  은행권 경력이 있으신 경우 은행권 자체 말소
+                                  진행으로 별도의 말소 처리가 필요하지 않습니다.{" "}
+                                  <br />
+                                  (단, 생명보험협회 말소 이력 조회를 통해 말소
+                                  처리 이력 페이지를 확인 후 제출하셔야 합니다.)
                                 </p>
                               </div>
                             </div>
@@ -997,9 +1103,9 @@ export default function ExperiencedApplicantPage() {
                     📋 필수 제출 서류
                   </h4>
                   <p className="text-sm text-amber-700 mb-3">
-                    아래 서류들을 준비하여 본사에서 발송하는 링크를 통해 제출해주세요.
-                    <br />
-                    각 서류별 링크를 클릭하여 발급받으실 수 있습니다.
+                    아래 서류들을 준비하여 본사에서 발송하는 링크를 통해
+                    제출해주세요.
+                    <br />각 서류별 링크를 클릭하여 발급받으실 수 있습니다.
                   </p>
                   <DocumentSummary type="experienced" />
                 </div>
