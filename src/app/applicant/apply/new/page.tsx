@@ -88,12 +88,18 @@ const steps = [
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case 'pending': return '대기';
-    case 'reviewing': return '검토중';
-    case 'approved': return '승인';
-    case 'rejected': return '반려';
-    case 'completed': return '완료';
-    default: return '알 수 없음';
+    case "pending":
+      return "대기";
+    case "reviewing":
+      return "검토중";
+    case "approved":
+      return "승인";
+    case "rejected":
+      return "반려";
+    case "completed":
+      return "완료";
+    default:
+      return "알 수 없음";
   }
 };
 
@@ -103,7 +109,11 @@ export default function NewApplicantPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isDuplicateFound, setIsDuplicateFound] = useState(false);
-  const [duplicateData, setDuplicateData] = useState<{name: string, phone: string, status: string} | null>(null);
+  const [duplicateData, setDuplicateData] = useState<{
+    name: string;
+    phone: string;
+    status: string;
+  } | null>(null);
 
   // 시험 일정 관련 상태
   const [examSchedules, setExamSchedules] = useState<ExamSchedule[]>([]);
@@ -137,18 +147,22 @@ export default function NewApplicantPage() {
   const loadExamSchedules = async () => {
     setLoadingSchedules(true);
     try {
-      const response = await fetch('/api/exam-schedules');
+      const response = await fetch("/api/exam-schedules");
       if (response.ok) {
         const data = await response.json();
         const schedules = data.data || [];
         setExamSchedules(schedules);
 
         // 사용 가능한 지역 추출
-        const regions = [...new Set(schedules.flatMap((schedule: ExamSchedule) => schedule.locations))] as string[];
+        const regions = [
+          ...new Set(
+            schedules.flatMap((schedule: ExamSchedule) => schedule.locations)
+          ),
+        ] as string[];
         setAvailableRegions(regions);
       }
     } catch (error) {
-      console.error('시험 일정 로딩 실패:', error);
+      console.error("시험 일정 로딩 실패:", error);
     } finally {
       setLoadingSchedules(false);
     }
@@ -157,21 +171,23 @@ export default function NewApplicantPage() {
   // 선택된 지역의 시험 일정 필터링
   const getFilteredSchedules = () => {
     if (!formData.examRegion) return [];
-    return examSchedules.filter(schedule =>
-      schedule.locations.includes(formData.examRegion)
-    ).sort((a, b) => a.session_number - b.session_number);
+    return examSchedules
+      .filter((schedule) => schedule.locations.includes(formData.examRegion))
+      .sort((a, b) => a.session_number - b.session_number);
   };
 
   // 선택된 시험 일정 조회
   const getSelectedSchedule = () => {
-    return examSchedules.find(schedule => schedule.id === formData.selectedScheduleId);
+    return examSchedules.find(
+      (schedule) => schedule.id === formData.selectedScheduleId
+    );
   };
 
   // 날짜 계산 함수
   const addDays = (dateString: string, days: number) => {
     const date = new Date(dateString);
     date.setDate(date.getDate() + days);
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split("T")[0];
   };
 
   // 신청 마감일 확인 함수
@@ -185,7 +201,7 @@ export default function NewApplicantPage() {
 
     // 시간 정보가 있으면 정확한 시간까지 고려
     if (schedule.internal_deadline_time) {
-      const [hours, minutes] = schedule.internal_deadline_time.split(':');
+      const [hours, minutes] = schedule.internal_deadline_time.split(":");
       deadlineDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
     } else {
       // 시간 정보가 없으면 해당 날의 23:59:59로 설정
@@ -197,13 +213,13 @@ export default function NewApplicantPage() {
 
   // 시험 일정 선택 시 자동 입력
   const handleScheduleSelect = (scheduleId: string) => {
-    const schedule = examSchedules.find(s => s.id === scheduleId);
+    const schedule = examSchedules.find((s) => s.id === scheduleId);
     if (schedule && !isApplicationClosed(schedule)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         selectedScheduleId: scheduleId,
         lifeInsurancePassDate: schedule.exam_date, // 시험일로 자동 설정
-        lifeEducationDate: addDays(schedule.exam_date, -1) // 시험일 하루 전으로 자동 설정
+        lifeEducationDate: addDays(schedule.exam_date, -1), // 시험일 하루 전으로 자동 설정
       }));
     }
   };
@@ -212,7 +228,7 @@ export default function NewApplicantPage() {
     if (duplicateData) {
       const params = new URLSearchParams({
         name: duplicateData.name,
-        phone: duplicateData.phone
+        phone: duplicateData.phone,
       });
       router.push(`/applicant/status?${params.toString()}`);
     }
@@ -224,15 +240,18 @@ export default function NewApplicantPage() {
     }
 
     try {
-      const result = await checkDuplicateApplicant(formData.name, formData.phone);
+      const result = await checkDuplicateApplicant(
+        formData.name,
+        formData.phone
+      );
       if (result.success) {
         return result;
       } else {
-        alert(result.error || '중복 확인 중 오류가 발생했습니다.');
+        alert(result.error || "중복 확인 중 오류가 발생했습니다.");
         return false;
       }
     } catch (error) {
-      alert('중복 확인 중 오류가 발생했습니다.');
+      alert("중복 확인 중 오류가 발생했습니다.");
       return false;
     }
   };
@@ -281,9 +300,13 @@ export default function NewApplicantPage() {
           return false;
         }
         // 선택된 일정이 마감되었는지 확인
-        const selectedSchedule = examSchedules.find(s => s.id === formData.selectedScheduleId);
+        const selectedSchedule = examSchedules.find(
+          (s) => s.id === formData.selectedScheduleId
+        );
         if (selectedSchedule && isApplicationClosed(selectedSchedule)) {
-          alert("선택하신 시험 일정의 신청이 이미 마감되었습니다. 다른 일정을 선택해주세요.");
+          alert(
+            "선택하신 시험 일정의 신청이 이미 마감되었습니다. 다른 일정을 선택해주세요."
+          );
           return false;
         }
         if (!formData.lifeInsurancePassDate) {
@@ -341,7 +364,7 @@ export default function NewApplicantPage() {
         setDuplicateData({
           name: formData.name,
           phone: formData.phone,
-          status: getStatusText(existingApplicant?.status || '알 수 없음')
+          status: getStatusText(existingApplicant?.status || "알 수 없음"),
         });
         setIsDuplicateFound(true);
         return;
@@ -384,7 +407,7 @@ export default function NewApplicantPage() {
           life_education_date: formData.lifeEducationDate,
           documents_confirmed: formData.documentsConfirmed,
           document_preparation_date: formData.documentPreparationDate,
-          applicant_type: 'new' as const,
+          applicant_type: "new" as const,
         };
 
         const result = await createApplicant(applicantData);
@@ -400,7 +423,9 @@ export default function NewApplicantPage() {
         // 시험 신청 정보도 함께 저장
         if (formData.selectedScheduleId) {
           try {
-            const selectedSchedule = examSchedules.find(s => s.id === formData.selectedScheduleId);
+            const selectedSchedule = examSchedules.find(
+              (s) => s.id === formData.selectedScheduleId
+            );
             if (selectedSchedule) {
               const examApplicationData = {
                 applicant_id: result.data.id,
@@ -409,12 +434,14 @@ export default function NewApplicantPage() {
                 exam_round: selectedSchedule.session_number,
                 exam_date: selectedSchedule.exam_date,
                 exam_location: formData.examRegion,
-                application_date: new Date().toISOString().split('T')[0],
-                status: 'pending' as const,
-                notes: null
+                application_date: new Date().toISOString().split("T")[0],
+                status: "pending" as const,
+                notes: null,
               };
 
-              const examResult = await createExamApplication(examApplicationData);
+              const examResult = await createExamApplication(
+                examApplicationData
+              );
               console.log("시험 신청 등록 성공:", examResult);
             }
           } catch (examError) {
@@ -424,7 +451,9 @@ export default function NewApplicantPage() {
         }
       } catch (error) {
         console.error("등록 중 오류:", error);
-        setSubmitError("시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        setSubmitError(
+          "시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+        );
         setIsSubmitting(false);
         return;
       }
@@ -500,9 +529,16 @@ export default function NewApplicantPage() {
               <div className="bg-white p-4 rounded-lg border border-amber-200">
                 <h4 className="font-medium text-gray-900 mb-2">신청자 정보</h4>
                 <div className="space-y-1 text-sm text-gray-600">
-                  <p><span className="font-medium">이름:</span> {duplicateData.name}</p>
-                  <p><span className="font-medium">연락처:</span> {duplicateData.phone}</p>
-                  <p><span className="font-medium">현재 상태:</span>
+                  <p>
+                    <span className="font-medium">이름:</span>{" "}
+                    {duplicateData.name}
+                  </p>
+                  <p>
+                    <span className="font-medium">연락처:</span>{" "}
+                    {duplicateData.phone}
+                  </p>
+                  <p>
+                    <span className="font-medium">현재 상태:</span>
                     <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
                       {duplicateData.status}
                     </span>
@@ -519,10 +555,7 @@ export default function NewApplicantPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  onClick={handleGoToStatus}
-                  className="flex-1"
-                >
+                <Button onClick={handleGoToStatus} className="flex-1">
                   진행 상황 확인하기
                 </Button>
                 <Button
@@ -648,7 +681,9 @@ export default function NewApplicantPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <RecruiterSelect
                     value={formData.recruiterName}
-                    onChange={(value) => handleInputChange("recruiterName", value)}
+                    onChange={(value) =>
+                      handleInputChange("recruiterName", value)
+                    }
                     required={false}
                     description="등록된 모집자 중에서 선택해주세요 (선택사항)"
                   />
@@ -669,13 +704,13 @@ export default function NewApplicantPage() {
                     value={formData.bankAccount}
                     onChange={(e) => {
                       // 숫자와 하이픈만 허용
-                      const value = e.target.value.replace(/[^0-9-]/g, '');
+                      const value = e.target.value.replace(/[^0-9-]/g, "");
                       handleInputChange("bankAccount", value);
                     }}
                     onInput={(e) => {
                       // 실시간으로 숫자와 하이픈만 허용
                       const target = e.target as HTMLInputElement;
-                      target.value = target.value.replace(/[^0-9-]/g, '');
+                      target.value = target.value.replace(/[^0-9-]/g, "");
                     }}
                     placeholder="123456-12-123456"
                     inputMode="numeric"
@@ -749,7 +784,6 @@ export default function NewApplicantPage() {
                     최종 졸업한 학교명을 입력해주세요.
                   </p>
                 </div>
-
               </div>
             )}
 
@@ -765,11 +799,14 @@ export default function NewApplicantPage() {
                   <div className="space-y-2 text-sm text-indigo-600">
                     <div className="flex items-start">
                       <span className="font-medium mr-2">📍</span>
-                      <span>시험 장소 및 시간은 선택한 지역 내에서 랜덤으로 배정됩니다.</span>
+                      <span>
+                        시험 장소 및 시간은 선택한 지역 내에서 랜덤으로
+                        배정됩니다.
+                      </span>
                     </div>
                     <div className="flex items-start">
                       <span className="font-medium mr-2">📄</span>
-                      <span>수험표는 시험일 2일 전에 전달 예정입니다.</span>
+                      <span>수험표는 시험일 1~2일 전에 전달 예정입니다.</span>
                     </div>
                   </div>
                 </div>
@@ -796,11 +833,11 @@ export default function NewApplicantPage() {
                         onChange={(e) => {
                           handleInputChange("examRegion", e.target.value);
                           // 지역 변경 시 선택된 일정 초기화
-                          setFormData(prev => ({
+                          setFormData((prev) => ({
                             ...prev,
                             selectedScheduleId: "",
                             lifeInsurancePassDate: "",
-                            lifeEducationDate: ""
+                            lifeEducationDate: "",
                           }));
                         }}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
@@ -839,12 +876,14 @@ export default function NewApplicantPage() {
                               key={schedule.id}
                               className={`p-3 border-2 rounded-lg transition-all ${
                                 isClosed
-                                  ? 'border-red-200 bg-red-50 cursor-not-allowed opacity-75'
+                                  ? "border-red-200 bg-red-50 cursor-not-allowed opacity-75"
                                   : formData.selectedScheduleId === schedule.id
-                                  ? 'border-green-500 bg-green-100 cursor-pointer'
-                                  : 'border-gray-200 hover:border-green-300 cursor-pointer'
+                                  ? "border-green-500 bg-green-100 cursor-pointer"
+                                  : "border-gray-200 hover:border-green-300 cursor-pointer"
                               }`}
-                              onClick={() => !isClosed && handleScheduleSelect(schedule.id)}
+                              onClick={() =>
+                                !isClosed && handleScheduleSelect(schedule.id)
+                              }
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center flex-1 min-w-0">
@@ -852,46 +891,70 @@ export default function NewApplicantPage() {
                                     type="radio"
                                     name="examSchedule"
                                     value={schedule.id}
-                                    checked={formData.selectedScheduleId === schedule.id}
-                                    onChange={() => handleScheduleSelect(schedule.id)}
+                                    checked={
+                                      formData.selectedScheduleId ===
+                                      schedule.id
+                                    }
+                                    onChange={() =>
+                                      handleScheduleSelect(schedule.id)
+                                    }
                                     disabled={isClosed}
                                     className="mr-3 flex-shrink-0"
                                   />
                                   <div className="flex-1 min-w-0">
-                                    <div className={`font-medium flex items-center gap-2 flex-wrap ${
-                                      isClosed ? 'text-red-600' : 'text-gray-900'
-                                    }`}>
-                                      <span>{schedule.session_number}차</span>
-                                      <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${
+                                    <div
+                                      className={`font-medium flex items-center gap-2 flex-wrap ${
                                         isClosed
-                                          ? 'bg-red-500 text-white'
-                                          : 'bg-green-500 text-white'
-                                      }`}>
-                                        {isClosed ? '신청 마감' : '접수 가능'}
+                                          ? "text-red-600"
+                                          : "text-gray-900"
+                                      }`}
+                                    >
+                                      <span>{schedule.session_number}차</span>
+                                      <span
+                                        className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${
+                                          isClosed
+                                            ? "bg-red-500 text-white"
+                                            : "bg-green-500 text-white"
+                                        }`}
+                                      >
+                                        {isClosed ? "신청 마감" : "접수 가능"}
                                       </span>
                                     </div>
-                                    <div className={`text-sm break-words mt-1 ${
-                                      isClosed ? 'text-red-500' : 'text-gray-600'
-                                    }`}>
-                                      시험일: {new Date(schedule.exam_date).toLocaleDateString('ko-KR', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        weekday: 'long'
+                                    <div
+                                      className={`text-sm break-words mt-1 ${
+                                        isClosed
+                                          ? "text-red-500"
+                                          : "text-gray-600"
+                                      }`}
+                                    >
+                                      시험일:{" "}
+                                      {new Date(
+                                        schedule.exam_date
+                                      ).toLocaleDateString("ko-KR", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                        weekday: "long",
                                       })}
                                     </div>
-                                    {isClosed && schedule.internal_deadline_date && (
-                                      <div className="text-xs text-red-500 mt-1 break-words">
-                                        신청마감: {new Date(schedule.internal_deadline_date).toLocaleDateString('ko-KR', {
-                                          month: 'long',
-                                          day: 'numeric',
-                                          weekday: 'short'
-                                        })}
-                                        {schedule.internal_deadline_time &&
-                                          ` ${schedule.internal_deadline_time.slice(0, 5)}`
-                                        }
-                                      </div>
-                                    )}
+                                    {isClosed &&
+                                      schedule.internal_deadline_date && (
+                                        <div className="text-xs text-red-500 mt-1 break-words">
+                                          신청마감:{" "}
+                                          {new Date(
+                                            schedule.internal_deadline_date
+                                          ).toLocaleDateString("ko-KR", {
+                                            month: "long",
+                                            day: "numeric",
+                                            weekday: "short",
+                                          })}
+                                          {schedule.internal_deadline_time &&
+                                            ` ${schedule.internal_deadline_time.slice(
+                                              0,
+                                              5
+                                            )}`}
+                                        </div>
+                                      )}
                                   </div>
                                 </div>
                               </div>
@@ -900,13 +963,17 @@ export default function NewApplicantPage() {
                         })}
                       </div>
                       <p className="text-sm text-green-600 mt-2">
-                        원하는 시험 일정을 선택해주세요. 선택하면 자격 정보가 자동으로 입력됩니다.
+                        원하는 시험 일정을 선택해주세요. 선택하면 자격 정보가
+                        자동으로 입력됩니다.
                       </p>
-                      {getFilteredSchedules().some(schedule => isApplicationClosed(schedule)) && (
+                      {getFilteredSchedules().some((schedule) =>
+                        isApplicationClosed(schedule)
+                      ) && (
                         <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                           <p className="text-sm text-amber-700">
-                            <strong>⚠️ 안내:</strong> 빨간색으로 표시된 일정은 신청 마감된 시험입니다.
-                            시험일은 아직 남아있지만 내부 신청 접수가 마감되어 선택할 수 없습니다.
+                            <strong>⚠️ 안내:</strong> 빨간색으로 표시된 일정은
+                            신청 마감된 시험입니다. 시험일은 아직 남아있지만
+                            내부 신청 접수가 마감되어 선택할 수 없습니다.
                           </p>
                         </div>
                       )}
@@ -924,7 +991,8 @@ export default function NewApplicantPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="lifeInsurancePassDate">
-                          생명보험 합격 예정일 <span className="text-red-500">*</span>
+                          생명보험 합격 예정일{" "}
+                          <span className="text-red-500">*</span>
                         </Label>
                         {/* DatePicker 캘린더 기능 - 추후 복구 가능하도록 주석 처리
                         <DatePicker
@@ -938,12 +1006,18 @@ export default function NewApplicantPage() {
                         */}
                         <Input
                           id="lifeInsurancePassDate"
-                          value={formData.lifeInsurancePassDate ? new Date(formData.lifeInsurancePassDate).toLocaleDateString('ko-KR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            weekday: 'long'
-                          }) : ''}
+                          value={
+                            formData.lifeInsurancePassDate
+                              ? new Date(
+                                  formData.lifeInsurancePassDate
+                                ).toLocaleDateString("ko-KR", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  weekday: "long",
+                                })
+                              : ""
+                          }
                           readOnly
                           placeholder="시험 일정 선택 시 자동 입력됩니다"
                           className="bg-gray-50 cursor-not-allowed"
@@ -954,7 +1028,8 @@ export default function NewApplicantPage() {
                       </div>
                       <div>
                         <Label htmlFor="lifeEducationDate">
-                          생명교육 이수 예정일 <span className="text-red-500">*</span>
+                          생명교육 이수 예정일{" "}
+                          <span className="text-red-500">*</span>
                         </Label>
                         {/* DatePicker 캘린더 기능 - 추후 복구 가능하도록 주석 처리
                         <DatePicker
@@ -968,12 +1043,18 @@ export default function NewApplicantPage() {
                         */}
                         <Input
                           id="lifeEducationDate"
-                          value={formData.lifeEducationDate ? new Date(formData.lifeEducationDate).toLocaleDateString('ko-KR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            weekday: 'long'
-                          }) : ''}
+                          value={
+                            formData.lifeEducationDate
+                              ? new Date(
+                                  formData.lifeEducationDate
+                                ).toLocaleDateString("ko-KR", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  weekday: "long",
+                                })
+                              : ""
+                          }
                           readOnly
                           placeholder="시험 일정 선택 시 자동 입력됩니다"
                           className="bg-gray-50 cursor-not-allowed"
@@ -1013,7 +1094,10 @@ export default function NewApplicantPage() {
                   documentsConfirmed={formData.documentsConfirmed}
                   documentPreparationDate={formData.documentPreparationDate}
                   onDocumentsConfirmedChange={(confirmed) =>
-                    handleInputChange("documentsConfirmed", confirmed.toString())
+                    handleInputChange(
+                      "documentsConfirmed",
+                      confirmed.toString()
+                    )
                   }
                   onPreparationDateChange={(date) =>
                     handleInputChange("documentPreparationDate", date)
@@ -1074,8 +1158,7 @@ export default function NewApplicantPage() {
                   </h4>
                   <p className="text-sm text-amber-700 mb-3">
                     서류 제출 링크 수신 전까지 아래 서류들을 미리 준비해주세요.
-                    <br />
-                    각 서류별 링크를 클릭하여 발급받으실 수 있습니다.
+                    <br />각 서류별 링크를 클릭하여 발급받으실 수 있습니다.
                   </p>
                   <DocumentSummary type="new" />
                 </div>
