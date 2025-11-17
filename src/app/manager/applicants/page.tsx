@@ -19,6 +19,7 @@ import { getCareersByApplicant, type Career } from '@/lib/careers'
 import { Database } from '@/types/database'
 import { decryptResidentNumber } from '@/lib/encryption'
 import { useAdminAuth } from '@/hooks/use-admin-auth'
+import { BankSelect } from '@/components/forms/bank-select'
 
 type ApplicantStatus = Database['public']['Tables']['applicants']['Row']['status']
 import {
@@ -38,7 +39,9 @@ import {
   Building,
   X,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Edit,
+  Save
 } from 'lucide-react'
 
 interface Applicant {
@@ -88,6 +91,9 @@ export default function ManagerApplicantsPage() {
   const [applicantToDelete, setApplicantToDelete] = useState<Applicant | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [showDeleted, setShowDeleted] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingData, setEditingData] = useState<Partial<Applicant>>({})
+  const [savingEdit, setSavingEdit] = useState(false)
 
   useEffect(() => {
     fetchApplicants()
@@ -168,6 +174,8 @@ export default function ManagerApplicantsPage() {
   const handleViewDetail = (applicant: Applicant) => {
     setSelectedApplicant(applicant)
     setShowDetailModal(true)
+    setIsEditing(false)
+    setEditingData({})
     // 시험 신청 내역 가져오기
     fetchExamApplications(applicant.id)
     // 경력자인 경우 경력 정보도 가져오기
@@ -303,6 +311,67 @@ export default function ManagerApplicantsPage() {
     setLoadingExamApplications(false)
     setCareerData([])
     setLoadingCareerData(false)
+    setIsEditing(false)
+    setEditingData({})
+  }
+
+  const handleStartEdit = () => {
+    if (selectedApplicant) {
+      setIsEditing(true)
+      setEditingData({
+        ...selectedApplicant,
+        resident_number: selectedApplicant.resident_number ? decryptResidentNumber(selectedApplicant.resident_number) : ''
+      })
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setEditingData({})
+  }
+
+  const handleSaveEdit = async () => {
+    if (!selectedApplicant || !admin) return
+
+    setSavingEdit(true)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch(`/api/applicants/${selectedApplicant.id}/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editingData)
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert('지원자 정보가 업데이트되었습니다.')
+        await fetchApplicants() // 목록 새로고침
+        setIsEditing(false)
+        setEditingData({})
+        // 상세보기 다시 로드
+        const updatedApplicant = applicants.find(a => a.id === selectedApplicant.id)
+        if (updatedApplicant) {
+          setSelectedApplicant(updatedApplicant)
+        }
+      } else {
+        alert(result.error || '정보 수정에 실패했습니다.')
+      }
+    } catch (error) {
+      alert('정보 수정 중 오류가 발생했습니다.')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  const handleEditFieldChange = (field: string, value: any) => {
+    setEditingData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   const handleRecruiterEdit = () => {
@@ -710,9 +779,21 @@ export default function ManagerApplicantsPage() {
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                지원자 상세 정보
+              <DialogTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  지원자 상세 정보
+                </div>
+                {!isEditing && !showRecruiterEdit && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleStartEdit}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    정보 수정
+                  </Button>
+                )}
               </DialogTitle>
             </DialogHeader>
             {selectedApplicant && (
@@ -732,7 +813,16 @@ export default function ManagerApplicantsPage() {
                       <Mail className="h-4 w-4 text-gray-500" />
                       <span className="text-sm font-medium text-gray-500">이메일</span>
                     </div>
-                    <div className="text-lg break-all">{selectedApplicant.email}</div>
+                    {isEditing ? (
+                      <Input
+                        type="email"
+                        value={editingData.email || ''}
+                        onChange={(e) => handleEditFieldChange('email', e.target.value)}
+                        className="text-lg"
+                      />
+                    ) : (
+                      <div className="text-lg break-all">{selectedApplicant.email}</div>
+                    )}
                   </div>
 
                   <div className="space-y-3">
@@ -740,7 +830,15 @@ export default function ManagerApplicantsPage() {
                       <Phone className="h-4 w-4 text-gray-500" />
                       <span className="text-sm font-medium text-gray-500">연락처</span>
                     </div>
-                    <div className="text-lg">{selectedApplicant.phone}</div>
+                    {isEditing ? (
+                      <Input
+                        value={editingData.phone || ''}
+                        onChange={(e) => handleEditFieldChange('phone', e.target.value)}
+                        className="text-lg"
+                      />
+                    ) : (
+                      <div className="text-lg">{selectedApplicant.phone}</div>
+                    )}
                   </div>
 
                   <div className="space-y-3">
@@ -760,9 +858,17 @@ export default function ManagerApplicantsPage() {
                     <MapPin className="h-4 w-4 text-gray-500" />
                     <span className="text-sm font-medium text-gray-500">주소</span>
                   </div>
-                  <div className="text-lg p-3 bg-gray-50 rounded-lg">
-                    {selectedApplicant.address}
-                  </div>
+                  {isEditing ? (
+                    <Input
+                      value={editingData.address || ''}
+                      onChange={(e) => handleEditFieldChange('address', e.target.value)}
+                      className="text-lg"
+                    />
+                  ) : (
+                    <div className="text-lg p-3 bg-gray-50 rounded-lg">
+                      {selectedApplicant.address}
+                    </div>
+                  )}
                 </div>
 
                 {/* 모집인 정보 */}
@@ -787,51 +893,175 @@ export default function ManagerApplicantsPage() {
                   </div>
                 </div>
 
+                {/* 주민등록번호 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500">생년월일</span>
+                  </div>
+                  {isEditing ? (
+                    <Input
+                      type="date"
+                      value={editingData.birth_date || ''}
+                      onChange={(e) => handleEditFieldChange('birth_date', e.target.value)}
+                      className="text-lg"
+                    />
+                  ) : (
+                    <div className="text-lg">
+                      {selectedApplicant.birth_date ? new Date(selectedApplicant.birth_date).toLocaleDateString('ko-KR') : '없음'}
+                    </div>
+                  )}
+                </div>
+
+                {/* 주민등록번호 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500">주민등록번호</span>
+                  </div>
+                  <div className="text-lg">
+                    {selectedApplicant.resident_number ? '***************' : '없음'}
+                  </div>
+                </div>
+
                 {/* 은행 정보 */}
-                {selectedApplicant.bank_name && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-500">계좌정보</span>
+                      <span className="text-sm font-medium text-gray-500">은행명</span>
                     </div>
-                    <div className="text-lg">
-                      {selectedApplicant.bank_name} {selectedApplicant.bank_account}
-                    </div>
+                    {isEditing ? (
+                      <BankSelect
+                        label=""
+                        value={editingData.bank_name || ''}
+                        onChange={(value) => handleEditFieldChange('bank_name', value)}
+                      />
+                    ) : (
+                      <div className="text-lg">{selectedApplicant.bank_name || '없음'}</div>
+                    )}
                   </div>
-                )}
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-500">계좌번호</span>
+                    </div>
+                    {isEditing ? (
+                      <Input
+                        value={editingData.bank_account || ''}
+                        onChange={(e) => handleEditFieldChange('bank_account', e.target.value)}
+                        placeholder="계좌번호"
+                        className="text-lg"
+                      />
+                    ) : (
+                      <div className="text-lg">{selectedApplicant.bank_account || '없음'}</div>
+                    )}
+                  </div>
+                </div>
 
                 {/* 학력 정보 */}
-                {selectedApplicant.final_school && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-500">최종학교</span>
-                    </div>
-                    <div className="text-lg">{selectedApplicant.final_school}</div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500">최종학교</span>
                   </div>
-                )}
+                  <div className="text-lg">{selectedApplicant.final_school || '없음'}</div>
+                </div>
 
                 {/* 보험 관련 정보 */}
-                {(selectedApplicant.life_insurance_pass_date || selectedApplicant.life_education_date) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedApplicant.life_insurance_pass_date && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-500">생명보험합격일</span>
-                        </div>
-                        <div className="text-lg">
-                          {new Date(selectedApplicant.life_insurance_pass_date).toLocaleDateString('ko-KR')}
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-500">생명보험합격일</span>
+                    </div>
+                    {isEditing ? (
+                      <DatePicker
+                        value={editingData.life_insurance_pass_date || ''}
+                        onChange={(date) => handleEditFieldChange('life_insurance_pass_date', date)}
+                        className="text-lg"
+                      />
+                    ) : (
+                      <div className="text-lg">
+                        {selectedApplicant.life_insurance_pass_date ?
+                          new Date(selectedApplicant.life_insurance_pass_date).toLocaleDateString('ko-KR') :
+                          '없음'
+                        }
                       </div>
                     )}
-                    {selectedApplicant.life_education_date && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-500">생명교육이수일</span>
-                        </div>
-                        <div className="text-lg">
-                          {new Date(selectedApplicant.life_education_date).toLocaleDateString('ko-KR')}
-                        </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-500">생명교육이수일</span>
+                    </div>
+                    {isEditing ? (
+                      <DatePicker
+                        value={editingData.life_education_date || ''}
+                        onChange={(date) => handleEditFieldChange('life_education_date', date)}
+                        className="text-lg"
+                      />
+                    ) : (
+                      <div className="text-lg">
+                        {selectedApplicant.life_education_date ?
+                          new Date(selectedApplicant.life_education_date).toLocaleDateString('ko-KR') :
+                          '없음'
+                        }
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* 서류 확인 정보 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-500">서류 확인</span>
+                    </div>
+                    <div className="text-lg">
+                      <Badge variant={selectedApplicant.documents_confirmed ? 'default' : 'secondary'}>
+                        {selectedApplicant.documents_confirmed ? '확인완료' : '미확인'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-500">서류 준비 예정일</span>
+                    </div>
+                    <div className="text-lg">
+                      {selectedApplicant.document_preparation_date ?
+                        new Date(selectedApplicant.document_preparation_date).toLocaleDateString('ko-KR') :
+                        '없음'
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                {/* 위촉 마감일 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500">위촉 마감일</span>
+                  </div>
+                  <div className="text-lg">
+                    {selectedApplicant.appointment_deadline ?
+                      new Date(selectedApplicant.appointment_deadline).toLocaleDateString('ko-KR') :
+                      '없음'
+                    }
+                  </div>
+                </div>
+
+                {/* 편집 모드 버튼들 */}
+                {isEditing && (
+                  <div className="flex justify-end gap-2 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      disabled={savingEdit}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      onClick={handleSaveEdit}
+                      disabled={savingEdit}
+                    >
+                      {savingEdit ? '저장 중...' : '저장'}
+                    </Button>
                   </div>
                 )}
 
@@ -934,22 +1164,6 @@ export default function ManagerApplicantsPage() {
                   </div>
                 </div>
 
-                {/* 서류 확인 정보 */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-500">서류 준비 상태</span>
-                  </div>
-                  <div className="text-lg">
-                    <Badge variant={selectedApplicant.documents_confirmed ? 'default' : 'secondary'}>
-                      {selectedApplicant.documents_confirmed ? '확인완료' : '미확인'}
-                    </Badge>
-                    {selectedApplicant.document_preparation_date && (
-                      <div className="text-sm text-gray-600 mt-1">
-                        준비 예정일: {new Date(selectedApplicant.document_preparation_date).toLocaleDateString('ko-KR')}
-                      </div>
-                    )}
-                  </div>
-                </div>
 
                 {/* 생명보험 시험 신청 내역 */}
                 <div className="space-y-3">
