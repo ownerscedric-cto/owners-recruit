@@ -659,7 +659,11 @@ export default function ManagerApplicantsPage() {
                               onChange={(date) => handleAppointmentDeadlineUpdate(applicant.id, date)}
                               placeholder="위촉 마감일 선택"
                               className="text-sm"
-                              min={new Date().toISOString().split('T')[0]}
+                              min={(() => {
+                                const submittedDate = new Date(applicant.submitted_at);
+                                const twoWeeksBefore = new Date(submittedDate.getTime() - 14 * 24 * 60 * 60 * 1000);
+                                return twoWeeksBefore.toISOString().split('T')[0];
+                              })()}
                             />
                           </div>
                         </TableCell>
