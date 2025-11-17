@@ -585,6 +585,7 @@ export default function ManagerApplicantsPage() {
                         <TableCell>
                           <div className="w-36">
                             <DatePicker
+                              id={`appointment-deadline-${applicant.id}`}
                               value={applicant.appointment_deadline || ''}
                               onChange={(date) => handleAppointmentDeadlineUpdate(applicant.id, date)}
                               placeholder="위촉 마감일 선택"
