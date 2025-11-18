@@ -1,10 +1,11 @@
 // 지원자 상태
 export type ApplicantStatus =
-  | 'pending'    // 대기
-  | 'reviewing'  // 검토중
-  | 'approved'   // 승인
-  | 'rejected'   // 반려
-  | 'completed'  // 완료
+  | 'pending'             // 대기
+  | 'reviewing'           // 1차 검토중
+  | 'reviewing_secondary' // 2차 검토중
+  | 'approved'            // 승인
+  | 'rejected'            // 반려
+  | 'completed'           // 완료
 
 // 지원자 정보
 export interface Applicant {

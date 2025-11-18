@@ -43,7 +43,9 @@ const getStatusBadge = (status: string) => {
     case 'pending':
       return <Badge variant="outline" className="text-yellow-600 border-yellow-600">대기</Badge>
     case 'reviewing':
-      return <Badge variant="default" className="bg-blue-600">검토중</Badge>
+      return <Badge variant="default" className="bg-blue-600">1차 검토중</Badge>
+    case 'reviewing_secondary':
+      return <Badge variant="default" className="bg-indigo-600">2차 검토중</Badge>
     case 'approved':
       return <Badge variant="default" className="bg-green-600">승인</Badge>
     case 'rejected':
@@ -59,11 +61,13 @@ const getStatusBadge = (status: string) => {
 const getStatusMessage = (status: string) => {
   switch (status) {
     case 'pending':
-      return '신청서가 접수되었습니다. 담당자가 검토 후 연락드리겠습니다.'
+      return '신청서가 접수되었습니다. 담당자가 1차 검토 후 연락드리겠습니다.'
     case 'reviewing':
-      return '제출해 주신 서류를 검토하고 있습니다. 추가 서류가 필요한 경우 개별 연락드리겠습니다.'
+      return '제출해 주신 서류를 1차 검토하고 있습니다. 추가 서류가 필요한 경우 개별 연락드리겠습니다.'
+    case 'reviewing_secondary':
+      return '1차 검토가 완료되어 2차 검토 단계입니다. 본사에서 발송된 위촉 링크를 통해 필수 서류를 등록해 주세요.'
     case 'approved':
-      return '서류 검토가 완료되어 승인되었습니다. 다음 단계 안내를 위해 연락드리겠습니다.'
+      return '서류 검토가 모두 완료되어 승인되었습니다. 입사 처리 단계로 진행됩니다.'
     case 'rejected':
       return '아쉽게도 이번 신청이 반려되었습니다. 상세한 사유는 개별 안내드렸습니다.'
     case 'completed':
@@ -85,6 +89,7 @@ const getTimelineFromStatus = (status: string, createdAt: string, appointmentDea
   const statusMap: Record<string, number> = {
     pending: 0,
     reviewing: 1,
+    reviewing_secondary: 2,
     approved: 3,
     completed: 4,
     rejected: 1 // rejected shows up to 1차 서류 검토 step

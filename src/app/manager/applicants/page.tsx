@@ -159,7 +159,9 @@ export default function ManagerApplicantsPage() {
       case 'pending':
         return <Badge variant="outline" className="text-yellow-600"><Clock className="h-3 w-3 mr-1" />대기</Badge>
       case 'reviewing':
-        return <Badge className="bg-blue-600"><Eye className="h-3 w-3 mr-1" />검토중</Badge>
+        return <Badge className="bg-blue-600"><Eye className="h-3 w-3 mr-1" />1차 검토중</Badge>
+      case 'reviewing_secondary':
+        return <Badge className="bg-indigo-600"><Eye className="h-3 w-3 mr-1" />2차 검토중</Badge>
       case 'approved':
         return <Badge className="bg-green-600"><CheckCircle className="h-3 w-3 mr-1" />승인</Badge>
       case 'rejected':
@@ -511,7 +513,8 @@ export default function ManagerApplicantsPage() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return '대기'
-      case 'reviewing': return '검토중'
+      case 'reviewing': return '1차 검토중'
+      case 'reviewing_secondary': return '2차 검토중'
       case 'approved': return '승인'
       case 'rejected': return '반려'
       case 'completed': return '완료'
@@ -581,7 +584,8 @@ export default function ManagerApplicantsPage() {
                   <SelectContent>
                     <SelectItem value="all">전체</SelectItem>
                     <SelectItem value="pending">대기</SelectItem>
-                    <SelectItem value="reviewing">검토중</SelectItem>
+                    <SelectItem value="reviewing">1차 검토중</SelectItem>
+                    <SelectItem value="reviewing_secondary">2차 검토중</SelectItem>
                     <SelectItem value="approved">승인</SelectItem>
                     <SelectItem value="rejected">반려</SelectItem>
                     <SelectItem value="completed">완료</SelectItem>
@@ -677,26 +681,38 @@ export default function ManagerApplicantsPage() {
                               상세
                             </Button>
                             {applicant.status === 'pending' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleStatusUpdate(applicant.id, 'reviewing')}
+                                disabled={updating === applicant.id}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                1차 검토
+                              </Button>
+                            )}
+                            {applicant.status === 'reviewing' && (
                               <>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleStatusUpdate(applicant.id, 'reviewing')}
+                                  onClick={() => handleStatusUpdate(applicant.id, 'reviewing_secondary')}
                                   disabled={updating === applicant.id}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                 >
-                                  검토
+                                  2차 검토
                                 </Button>
                                 <Button
                                   size="sm"
-                                  onClick={() => handleStatusUpdate(applicant.id, 'approved')}
+                                  variant="destructive"
+                                  onClick={() => handleStatusUpdate(applicant.id, 'rejected')}
                                   disabled={updating === applicant.id}
-                                  className="bg-green-600 hover:bg-green-700"
                                 >
-                                  승인
+                                  반려
                                 </Button>
                               </>
                             )}
-                            {applicant.status === 'reviewing' && (
+                            {applicant.status === 'reviewing_secondary' && (
                               <>
                                 <Button
                                   size="sm"
@@ -760,11 +776,12 @@ export default function ManagerApplicantsPage() {
         </Card>
 
         {/* 통계 요약 */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           {[
             { label: '전체', count: applicants.length, color: 'bg-gray-100' },
             { label: '대기', count: applicants.filter(a => a.status === 'pending').length, color: 'bg-yellow-100' },
-            { label: '검토중', count: applicants.filter(a => a.status === 'reviewing').length, color: 'bg-blue-100' },
+            { label: '1차 검토', count: applicants.filter(a => a.status === 'reviewing').length, color: 'bg-blue-100' },
+            { label: '2차 검토', count: applicants.filter(a => a.status === 'reviewing_secondary').length, color: 'bg-indigo-100' },
             { label: '승인', count: applicants.filter(a => a.status === 'approved').length, color: 'bg-green-100' },
             { label: '완료', count: applicants.filter(a => a.status === 'completed').length, color: 'bg-purple-100' },
           ].map((stat) => (

@@ -18,7 +18,7 @@ export interface Database {
           documents_confirmed: boolean
           document_preparation_date: string | null
           applicant_type: 'new' | 'experienced'
-          status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'completed'
+          status: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed'
           recruiter_id: string | null
           submitted_at: string
           updated_at: string
@@ -44,7 +44,7 @@ export interface Database {
           documents_confirmed?: boolean
           document_preparation_date?: string | null
           applicant_type?: 'new' | 'experienced'
-          status?: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'completed'
+          status?: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed'
           recruiter_id?: string | null
           submitted_at?: string
           updated_at?: string
@@ -70,7 +70,7 @@ export interface Database {
           documents_confirmed?: boolean
           document_preparation_date?: string | null
           applicant_type?: 'new' | 'experienced'
-          status?: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'completed'
+          status?: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed'
           recruiter_id?: string | null
           submitted_at?: string
           updated_at?: string
@@ -565,7 +565,7 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      applicant_status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'completed'
+      applicant_status: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed'
       admin_role: 'admin' | 'hr_manager' | 'system_admin'
     }
   }
