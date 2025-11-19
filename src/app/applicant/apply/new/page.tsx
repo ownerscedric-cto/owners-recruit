@@ -299,6 +299,12 @@ export default function NewApplicantPage() {
           alert("시험 일정을 선택해주세요.");
           return false;
         }
+
+        // "기타(waiting)" 선택지인 경우 추가 검증을 건너뜀
+        if (formData.selectedScheduleId === "waiting") {
+          break; // 기타 선택지는 추가 검증 없이 통과
+        }
+
         // 선택된 일정이 마감되었는지 확인
         const selectedSchedule = examSchedules.find(
           (s) => s.id === formData.selectedScheduleId
@@ -408,6 +414,7 @@ export default function NewApplicantPage() {
           documents_confirmed: formData.documentsConfirmed,
           document_preparation_date: formData.documentPreparationDate,
           applicant_type: "new" as const,
+          waiting_for_schedule: formData.selectedScheduleId === "waiting", // 기타 선택 시 true
         };
 
         const result = await createApplicant(applicantData);
@@ -420,8 +427,8 @@ export default function NewApplicantPage() {
 
         console.log("지원자 등록 성공:", result.data);
 
-        // 시험 신청 정보도 함께 저장
-        if (formData.selectedScheduleId) {
+        // 시험 신청 정보도 함께 저장 (기타 선택지가 아닌 경우에만)
+        if (formData.selectedScheduleId && formData.selectedScheduleId !== "waiting") {
           try {
             const selectedSchedule = examSchedules.find(
               (s) => s.id === formData.selectedScheduleId
@@ -448,6 +455,9 @@ export default function NewApplicantPage() {
             console.error("시험 신청 등록 실패:", examError);
             // 시험 신청 실패해도 지원자 등록은 성공했으므로 계속 진행
           }
+        } else if (formData.selectedScheduleId === "waiting") {
+          // "기타" 선택지의 경우 별도 메모로 기록
+          console.log("기타 선택지로 신청: 다음 달 시험 일정 대기 상태");
         }
       } catch (error) {
         console.error("등록 중 오류:", error);
@@ -961,6 +971,60 @@ export default function NewApplicantPage() {
                             </div>
                           );
                         })}
+
+                        {/* 모든 일정이 마감되었을 때 기타 선택지 추가 */}
+                        {getFilteredSchedules().length > 0 &&
+                         getFilteredSchedules().every((schedule) => isApplicationClosed(schedule)) && (
+                          <div
+                            className={`p-3 border-2 rounded-lg transition-all cursor-pointer ${
+                              formData.selectedScheduleId === "waiting"
+                                ? "border-blue-500 bg-blue-100"
+                                : "border-gray-200 hover:border-blue-300"
+                            }`}
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                selectedScheduleId: "waiting",
+                                lifeInsurancePassDate: "",
+                                lifeEducationDate: "",
+                              }));
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center flex-1 min-w-0">
+                                <input
+                                  type="radio"
+                                  name="examSchedule"
+                                  value="waiting"
+                                  checked={formData.selectedScheduleId === "waiting"}
+                                  onChange={() => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      selectedScheduleId: "waiting",
+                                      lifeInsurancePassDate: "",
+                                      lifeEducationDate: "",
+                                    }));
+                                  }}
+                                  className="mr-3 flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium flex items-center gap-2 flex-wrap text-blue-700">
+                                    <span>기타</span>
+                                    <span className="px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap bg-blue-500 text-white">
+                                      선택 가능
+                                    </span>
+                                  </div>
+                                  <div className="text-sm text-blue-600 mt-1">
+                                    이번 달 시험일정이 모두 마감되었습니다.
+                                  </div>
+                                  <div className="text-sm text-blue-600">
+                                    다음 달 시험 일정이 오픈되면 안내드리겠습니다.
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <p className="text-sm text-green-600 mt-2">
                         원하는 시험 일정을 선택해주세요. 선택하면 자격 정보가
@@ -981,8 +1045,8 @@ export default function NewApplicantPage() {
                   </div>
                 )}
 
-                {/* 보험 자격 정보 (자동 입력) */}
-                {formData.selectedScheduleId && (
+                {/* 보험 자격 정보 (자동 입력) - 기타 선택지가 아닌 경우에만 표시 */}
+                {formData.selectedScheduleId && formData.selectedScheduleId !== "waiting" && (
                   <div className="bg-orange-50 p-4 rounded-lg">
                     <h4 className="font-semibold text-orange-700 mb-3 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-2" />
@@ -1070,6 +1134,24 @@ export default function NewApplicantPage() {
                         <Clock className="h-4 w-4 mr-2" />
                         일정 조율이 필요할 경우 담당자(모집인)에게 문의해주세요.
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* "기타" 선택지가 선택되었을 때 안내 메시지 */}
+                {formData.selectedScheduleId === "waiting" && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-700 mb-3 flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      시험 일정 대기 안내
+                    </h4>
+                    <div className="space-y-2 text-sm text-blue-600">
+                      <p>• 현재 선택하신 지역의 이번 달 시험일정이 모두 마감되었습니다.</p>
+                      <p>• 다음 달 시험 일정이 오픈되면 별도로 안내해드릴 예정입니다.</p>
+                      <p>• 신청은 정상적으로 접수되며, 추후 시험 일정 확정 시 연락드리겠습니다.</p>
+                    </div>
+                    <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
+                      💡 생명보험 자격 정보는 시험 일정 확정 후 별도로 입력받을 예정입니다.
                     </div>
                   </div>
                 )}

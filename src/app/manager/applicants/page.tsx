@@ -60,6 +60,7 @@ interface Applicant {
   documents_confirmed: boolean
   document_preparation_date: string | null
   applicant_type: 'new' | 'experienced'
+  waiting_for_schedule?: boolean  // 시험 일정 대기 여부
   status: ApplicantStatus
   submitted_at: string
   appointment_deadline?: string | null
@@ -456,18 +457,22 @@ export default function ManagerApplicantsPage() {
 
     // 시험 신청 정보 가져오기
     let examApplicationsText = '';
-    try {
-      const examApplications = await getExamApplicationsByApplicant(applicant.id);
-      if (examApplications.length > 0) {
-        examApplicationsText = '\n\n<생명보험 시험 신청 정보>\n';
-        examApplications.forEach((exam, index) => {
-          const statusMap = {
-            'pending': '신청대기',
-            'confirmed': '접수완료',
-            'cancelled': '취소됨',
-            'completed': '시험완료'
-          };
-          examApplicationsText += `${index + 1}. 시험종류: ${exam.exam_type}
+    if (applicant.waiting_for_schedule) {
+      // 기타 선택 지원자
+      examApplicationsText = '\n\n<생명보험 시험 신청 정보>\n시험 일정 대기 중 - 다음 달 시험 일정이 오픈되면 별도 안내 예정\n\n';
+    } else {
+      try {
+        const examApplications = await getExamApplicationsByApplicant(applicant.id);
+        if (examApplications.length > 0) {
+          examApplicationsText = '\n\n<생명보험 시험 신청 정보>\n';
+          examApplications.forEach((exam, index) => {
+            const statusMap = {
+              'pending': '신청대기',
+              'confirmed': '접수완료',
+              'cancelled': '취소됨',
+              'completed': '시험완료'
+            };
+            examApplicationsText += `${index + 1}. 시험종류: ${exam.exam_type}
    차수: ${exam.exam_round || '미정'}
    시험일: ${formatDate(exam.exam_date)}
    시험장소: ${exam.exam_location || '미정'}
@@ -476,11 +481,12 @@ export default function ManagerApplicantsPage() {
    ${exam.notes ? `메모: ${exam.notes}` : ''}
 
 `;
-        });
+          });
+        }
+      } catch (error) {
+        // Error fetching exam applications
+        examApplicationsText = '\n\n<생명보험 시험 신청 정보>\n시험 신청 정보를 불러올 수 없습니다.\n\n';
       }
-    } catch (error) {
-      // Error fetching exam applications
-      examApplicationsText = '\n\n<생명보험 시험 신청 정보>\n시험 신청 정보를 불러올 수 없습니다.\n\n';
     }
 
     const info = `<신청자 정보>
@@ -986,47 +992,68 @@ export default function ManagerApplicantsPage() {
                 </div>
 
                 {/* 보험 관련 정보 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedApplicant.waiting_for_schedule ? (
+                  /* 기타 선택 지원자 - 시험 일정 대기 상태 표시 */
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-500">생명보험합격일</span>
+                      <span className="text-sm font-medium text-gray-500">생명보험 시험 상태</span>
                     </div>
-                    {isEditing ? (
-                      <DatePicker
-                        value={editingData.life_insurance_pass_date || ''}
-                        onChange={(date) => handleEditFieldChange('life_insurance_pass_date', date)}
-                        className="text-lg"
-                      />
-                    ) : (
-                      <div className="text-lg">
-                        {selectedApplicant.life_insurance_pass_date ?
-                          new Date(selectedApplicant.life_insurance_pass_date).toLocaleDateString('ko-KR') :
-                          '없음'
-                        }
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5 text-blue-600" />
+                        <div>
+                          <div className="text-lg font-medium text-blue-800">시험 일정 대기 중</div>
+                          <div className="text-sm text-blue-600 mt-1">
+                            이번 달 시험 일정이 모두 마감되어 다음 달 시험 일정이 오픈되면 별도 안내 예정입니다.
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
+                ) : (
+                  /* 일반 지원자 - 생명보험 관련 정보 표시 */
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-500">생명보험합격일</span>
+                      </div>
+                      {isEditing ? (
+                        <DatePicker
+                          value={editingData.life_insurance_pass_date || ''}
+                          onChange={(date) => handleEditFieldChange('life_insurance_pass_date', date)}
+                          className="text-lg"
+                        />
+                      ) : (
+                        <div className="text-lg">
+                          {selectedApplicant.life_insurance_pass_date ?
+                            new Date(selectedApplicant.life_insurance_pass_date).toLocaleDateString('ko-KR') :
+                            '없음'
+                          }
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-500">생명교육이수일</span>
-                    </div>
-                    {isEditing ? (
-                      <DatePicker
-                        value={editingData.life_education_date || ''}
-                        onChange={(date) => handleEditFieldChange('life_education_date', date)}
-                        className="text-lg"
-                      />
-                    ) : (
-                      <div className="text-lg">
-                        {selectedApplicant.life_education_date ?
-                          new Date(selectedApplicant.life_education_date).toLocaleDateString('ko-KR') :
-                          '없음'
-                        }
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-500">생명교육이수일</span>
                       </div>
-                    )}
+                      {isEditing ? (
+                        <DatePicker
+                          value={editingData.life_education_date || ''}
+                          onChange={(date) => handleEditFieldChange('life_education_date', date)}
+                          className="text-lg"
+                        />
+                      ) : (
+                        <div className="text-lg">
+                          {selectedApplicant.life_education_date ?
+                            new Date(selectedApplicant.life_education_date).toLocaleDateString('ko-KR') :
+                            '없음'
+                          }
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* 서류 확인 정보 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1191,7 +1218,14 @@ export default function ManagerApplicantsPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-500">생명보험 시험 신청 내역</span>
                   </div>
-                  {loadingExamApplications ? (
+                  {selectedApplicant.waiting_for_schedule ? (
+                    /* 기타 선택 지원자 - 시험 일정 대기 안내 */
+                    <div className="text-center py-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="text-blue-600">
+                        시험 일정 대기 중이므로 아직 시험 신청 내역이 없습니다.
+                      </div>
+                    </div>
+                  ) : loadingExamApplications ? (
                     <div className="text-center py-4">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                       <div className="text-sm text-gray-600 mt-2">로딩 중...</div>

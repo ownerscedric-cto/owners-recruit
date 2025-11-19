@@ -19,6 +19,7 @@ export interface ApplicantFormData {
   documents_confirmed?: boolean
   document_preparation_date?: string
   applicant_type?: 'new' | 'experienced'
+  waiting_for_schedule?: boolean  // 시험 일정 대기 여부 (기타 선택)
   previousCompanies?: {
     companyName: string
     position: string
@@ -65,6 +66,7 @@ export async function createApplicant(data: ApplicantFormData) {
       documents_confirmed: data.documents_confirmed || false,
       document_preparation_date: data.document_preparation_date || null,
       applicant_type: data.applicant_type || 'new',
+      waiting_for_schedule: data.waiting_for_schedule || false, // 기타 선택 시 true
       recruiter_id: recruiterId,
       status: 'pending' as const
     }
@@ -120,6 +122,7 @@ export async function getApplicants() {
         documents_confirmed,
         document_preparation_date,
         applicant_type,
+        waiting_for_schedule,
         status,
         submitted_at,
         appointment_deadline,
