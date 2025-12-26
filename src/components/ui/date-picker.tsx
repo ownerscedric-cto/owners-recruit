@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,20 +24,6 @@ export function DatePicker({
   required,
   className,
 }: DatePickerProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleClick = () => {
-    if (inputRef.current) {
-      // showPicker()가 지원되면 사용, 아니면 focus + click으로 fallback
-      try {
-        inputRef.current.showPicker();
-      } catch {
-        // showPicker()가 실패하면 click 이벤트 발생
-        inputRef.current.click();
-      }
-    }
-  };
-
   const formatDisplayDate = (dateStr: string) => {
     if (!dateStr) return placeholder || "날짜를 선택해주세요";
 
@@ -52,10 +37,9 @@ export function DatePicker({
   };
 
   return (
-    <div className={cn("relative", className)}>
-      {/* 숨겨진 date input */}
+    <label htmlFor={id} className={cn("relative block cursor-pointer", className)}>
+      {/* 투명한 date input - 전체 영역을 덮음 */}
       <input
-        ref={inputRef}
         id={id}
         type="date"
         value={value}
@@ -63,15 +47,14 @@ export function DatePicker({
         min={min}
         max={max}
         required={required}
-        className="sr-only"
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        style={{ fontSize: "16px" }} // iOS 줌 방지
       />
 
-      {/* 클릭 가능한 버튼 */}
-      <button
-        type="button"
-        onClick={handleClick}
+      {/* 시각적 표시 */}
+      <div
         className={cn(
-          "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer",
+          "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background",
           !value && "text-muted-foreground"
         )}
       >
@@ -79,7 +62,7 @@ export function DatePicker({
           {formatDisplayDate(value)}
         </span>
         <Calendar className="h-4 w-4 opacity-50 ml-2" />
-      </button>
-    </div>
+      </div>
+    </label>
   );
 }
