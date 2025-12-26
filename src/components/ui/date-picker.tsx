@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useRef } from "react";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,14 +25,16 @@ export function DatePicker({
   required,
   className,
 }: DatePickerProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const handleClick = () => {
-    // 숨겨진 date input을 클릭하여 캘린더 열기
-    const dateInput = document.getElementById(`${id}-hidden`) as HTMLInputElement;
-    if (dateInput) {
-      if (dateInput.showPicker) {
-        dateInput.showPicker();
-      } else {
-        dateInput.focus();
+    if (inputRef.current) {
+      // showPicker()가 지원되면 사용, 아니면 focus + click으로 fallback
+      try {
+        inputRef.current.showPicker();
+      } catch {
+        // showPicker()가 실패하면 click 이벤트 발생
+        inputRef.current.click();
       }
     }
   };
@@ -50,28 +52,27 @@ export function DatePicker({
   };
 
   return (
-    <div className="relative">
-      {/* 숨겨진 실제 date input */}
+    <div className={cn("relative", className)}>
+      {/* 숨겨진 date input */}
       <input
-        id={`${id}-hidden`}
+        ref={inputRef}
+        id={id}
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         min={min}
         max={max}
         required={required}
-        className="absolute opacity-0 pointer-events-none"
-        tabIndex={-1}
+        className="sr-only"
       />
 
-      {/* 클릭 가능한 버튼 형태 display */}
+      {/* 클릭 가능한 버튼 */}
       <button
         type="button"
         onClick={handleClick}
         className={cn(
-          "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-          !value && "text-muted-foreground",
-          className
+          "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer",
+          !value && "text-muted-foreground"
         )}
       >
         <span className="flex-1 text-left">
