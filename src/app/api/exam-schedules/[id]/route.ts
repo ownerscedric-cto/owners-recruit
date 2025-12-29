@@ -13,6 +13,47 @@ export async function PATCH(
     const updateData: ExamScheduleUpdate = await request.json()
     const supabase = createSupabaseServiceRoleClient()
 
+    // 빈 문자열을 null로 변환 (PostgreSQL date/time 타입 호환성)
+    const dateFields = [
+      'registration_start_date',
+      'registration_end_date',
+      'exam_date',
+      'internal_deadline_date',
+      'notice_date'
+    ]
+    const timeFields = [
+      'exam_time_start',
+      'exam_time_end',
+      'internal_deadline_time',
+      'notice_time'
+    ]
+    const stringFields = [
+      'session_range',
+      'notes',
+      'combined_notes'
+    ]
+
+    // 날짜 필드: 빈 문자열 -> null
+    for (const field of dateFields) {
+      if (field in updateData && (updateData as any)[field] === '') {
+        (updateData as any)[field] = null
+      }
+    }
+
+    // 시간 필드: 빈 문자열 -> null
+    for (const field of timeFields) {
+      if (field in updateData && (updateData as any)[field] === '') {
+        (updateData as any)[field] = null
+      }
+    }
+
+    // 문자열 필드: 빈 문자열 -> null (선택적)
+    for (const field of stringFields) {
+      if (field in updateData && (updateData as any)[field] === '') {
+        (updateData as any)[field] = null
+      }
+    }
+
     const { data: schedule, error } = await (supabase as any)
       .from('exam_schedules')
       .update(updateData)
