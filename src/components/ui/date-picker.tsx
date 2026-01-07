@@ -36,12 +36,30 @@ export function DatePicker({
     });
   };
 
+  const handleClick = () => {
+    // input 요소를 찾아서 클릭 이벤트 발생시키거나 focus
+    const input = document.getElementById(id || "");
+    if (input) {
+      input.focus();
+      input.click();
+      // iOS Safari에서는 showPicker()가 필요할 수 있음
+      if ("showPicker" in input) {
+        try {
+          (input as HTMLInputElement).showPicker();
+        } catch {
+          // showPicker 실패 시 무시
+        }
+      }
+    }
+  };
+
   return (
     <div className={cn("relative block", className)}>
-      {/* 시각적 표시 - pointer-events: none으로 클릭이 input으로 전달되도록 함 */}
+      {/* 클릭 가능한 시각적 표시 영역 */}
       <div
+        onClick={handleClick}
         className={cn(
-          "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background pointer-events-none",
+          "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors",
           !value && "text-muted-foreground"
         )}
       >
@@ -51,7 +69,7 @@ export function DatePicker({
         <Calendar className="h-4 w-4 opacity-50 ml-2" />
       </div>
 
-      {/* 투명한 date input - 전체 영역을 덮음 (맨 위에 위치) */}
+      {/* 숨겨진 date input */}
       <input
         id={id}
         type="date"
@@ -60,7 +78,7 @@ export function DatePicker({
         min={min}
         max={max}
         required={required}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        className="sr-only"
         style={{ fontSize: "16px" }} // iOS 줌 방지
       />
     </div>
