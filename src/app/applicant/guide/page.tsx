@@ -119,7 +119,7 @@ export default function ApplicantGuidePage() {
                 입사 프로세스 안내
               </CardTitle>
               <CardDescription>
-                오너스경영연구소 보험설계사 입사 과정을 단계별로 안내해드립니다.
+                오너스경영연구소 입사 과정을 단계별로 안내해드립니다.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -174,7 +174,7 @@ export default function ApplicantGuidePage() {
                 위촉/해촉 안내서
               </CardTitle>
               <CardDescription>
-                보험설계사 위촉 및 해촉 절차에 대한 상세 안내서를 다운로드하실
+                영업 팀장 위촉 및 해촉 절차에 대한 상세 안내서를 다운로드하실
                 수 있습니다.
               </CardDescription>
             </CardHeader>
