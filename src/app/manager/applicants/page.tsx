@@ -102,8 +102,8 @@ export default function ManagerApplicantsPage() {
   }, [admin])
 
   useEffect(() => {
-    // 검색 및 필터링 로직
-    let filtered = applicants
+    // 검색 및 필터링 로직 - completed 제외 (별도 섹션에서 관리)
+    let filtered = applicants.filter(applicant => applicant.status !== 'completed')
 
     if (searchTerm) {
       filtered = filtered.filter(applicant =>
@@ -119,6 +119,17 @@ export default function ManagerApplicantsPage() {
 
     setFilteredApplicants(filtered)
   }, [applicants, searchTerm, statusFilter])
+
+  // 승인 완료(completed) 지원자 목록 - 검색어 필터 적용
+  const completedApplicants = applicants.filter(applicant => {
+    if (applicant.status !== 'completed') return false
+    if (!searchTerm) return true
+    return (
+      applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      applicant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      applicant.phone.includes(searchTerm)
+    )
+  })
 
   const fetchApplicants = async () => {
     try {
@@ -594,7 +605,6 @@ export default function ManagerApplicantsPage() {
                     <SelectItem value="reviewing_secondary">2차 검토중</SelectItem>
                     <SelectItem value="approved">승인</SelectItem>
                     <SelectItem value="rejected">반려</SelectItem>
-                    <SelectItem value="completed">완료</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button onClick={exportToExcel} variant="outline" size="sm">
@@ -778,6 +788,107 @@ export default function ManagerApplicantsPage() {
                 </TableBody>
               </Table>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* 승인 완료 지원자 섹션 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-purple-600" />
+              승인 완료 지원자
+            </CardTitle>
+            <CardDescription>
+              전체 단계를 완료한 지원자 {completedApplicants.length}명
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {completedApplicants.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                승인 완료된 지원자가 없습니다.
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>이름</TableHead>
+                      <TableHead>연락처</TableHead>
+                      <TableHead>모집인</TableHead>
+                      <TableHead>완료일</TableHead>
+                      <TableHead>위촉 마감일</TableHead>
+                      <TableHead>액션</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {completedApplicants.map((applicant) => (
+                      <TableRow key={applicant.id} className="bg-purple-50/50">
+                        <TableCell className="font-medium">
+                          <div className="font-semibold">{applicant.name}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{applicant.phone}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium">
+                              {applicant.recruiters?.name || '없음'}
+                            </div>
+                            {applicant.recruiters?.team && (
+                              <div className="text-gray-500">{applicant.recruiters.team}</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-500">
+                          {new Date(applicant.submitted_at).toLocaleDateString('ko-KR')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-36">
+                            <DatePicker
+                              id={`completed-appointment-deadline-${applicant.id}`}
+                              value={applicant.appointment_deadline || ''}
+                              onChange={(date) => handleAppointmentDeadlineUpdate(applicant.id, date)}
+                              placeholder="위촉 마감일 선택"
+                              className="text-sm"
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewDetail(applicant)}
+                            >
+                              상세
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleStatusUpdate(applicant.id, 'pending')}
+                              disabled={updating === applicant.id}
+                            >
+                              재검토
+                            </Button>
+                            {(admin?.role === 'system_admin' || admin?.role === 'hr_manager') && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteClick(applicant)}
+                                className="bg-red-600 hover:bg-red-700 text-white border border-red-600"
+                                title="지원자 삭제"
+                              >
+                                삭제
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
 
