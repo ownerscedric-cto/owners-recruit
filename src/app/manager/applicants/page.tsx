@@ -41,7 +41,8 @@ import {
   Trash2,
   AlertTriangle,
   Edit,
-  Save
+  Save,
+  UserPlus
 } from 'lucide-react'
 
 interface Applicant {
@@ -95,6 +96,7 @@ export default function ManagerApplicantsPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editingData, setEditingData] = useState<Partial<Applicant>>({})
   const [savingEdit, setSavingEdit] = useState(false)
+  const [converting, setConverting] = useState<string | null>(null)
 
   useEffect(() => {
     fetchApplicants()
@@ -102,8 +104,10 @@ export default function ManagerApplicantsPage() {
   }, [admin])
 
   useEffect(() => {
-    // 검색 및 필터링 로직 - completed 제외 (별도 섹션에서 관리)
-    let filtered = applicants.filter(applicant => applicant.status !== 'completed')
+    // 검색 및 필터링 로직 - completed, converted 제외 (별도 섹션에서 관리)
+    let filtered = applicants.filter(applicant =>
+      applicant.status !== 'completed' && applicant.status !== 'converted'
+    )
 
     if (searchTerm) {
       filtered = filtered.filter(applicant =>
@@ -248,6 +252,34 @@ export default function ManagerApplicantsPage() {
       alert('삭제 중 오류가 발생했습니다.')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const handleConvertToRecruiter = async (applicant: Applicant) => {
+    if (!confirm(`${applicant.name}님을 모집인으로 전환하시겠습니까?\n\n전환 후에는 모집인 관리 페이지에서 관리됩니다.`)) {
+      return
+    }
+
+    setConverting(applicant.id)
+    try {
+      const response = await fetch('/api/applicants/convert-to-recruiter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicantId: applicant.id })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert(result.data.message)
+        await fetchApplicants() // 목록 새로고침
+      } else {
+        alert('전환 실패: ' + result.error)
+      }
+    } catch (error) {
+      alert('모집인 전환 중 오류가 발생했습니다.')
+    } finally {
+      setConverting(null)
     }
   }
 
@@ -861,6 +893,15 @@ export default function ManagerApplicantsPage() {
                               onClick={() => handleViewDetail(applicant)}
                             >
                               상세
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleConvertToRecruiter(applicant)}
+                              disabled={converting === applicant.id}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              {converting === applicant.id ? '전환중...' : '모집인 전환'}
                             </Button>
                             <Button
                               size="sm"

@@ -18,7 +18,7 @@ export interface Database {
           documents_confirmed: boolean
           document_preparation_date: string | null
           applicant_type: 'new' | 'experienced'
-          status: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed'
+          status: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed' | 'converted'
           recruiter_id: string | null
           submitted_at: string
           updated_at: string
@@ -27,6 +27,8 @@ export interface Database {
           deletion_reason: string | null
           deleted_by: string | null
           appointment_deadline: string | null
+          converted_to_recruiter_id: string | null
+          converted_at: string | null
         }
         Insert: {
           id?: string
@@ -44,7 +46,7 @@ export interface Database {
           documents_confirmed?: boolean
           document_preparation_date?: string | null
           applicant_type?: 'new' | 'experienced'
-          status?: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed'
+          status?: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed' | 'converted'
           recruiter_id?: string | null
           submitted_at?: string
           updated_at?: string
@@ -53,6 +55,8 @@ export interface Database {
           deletion_reason?: string | null
           deleted_by?: string | null
           appointment_deadline?: string | null
+          converted_to_recruiter_id?: string | null
+          converted_at?: string | null
         }
         Update: {
           id?: string
@@ -70,7 +74,7 @@ export interface Database {
           documents_confirmed?: boolean
           document_preparation_date?: string | null
           applicant_type?: 'new' | 'experienced'
-          status?: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed'
+          status?: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed' | 'converted'
           recruiter_id?: string | null
           submitted_at?: string
           updated_at?: string
@@ -79,6 +83,8 @@ export interface Database {
           deletion_reason?: string | null
           deleted_by?: string | null
           appointment_deadline?: string | null
+          converted_to_recruiter_id?: string | null
+          converted_at?: string | null
         }
       }
       audit_logs: {
@@ -565,7 +571,7 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      applicant_status: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed'
+      applicant_status: 'pending' | 'reviewing' | 'reviewing_secondary' | 'approved' | 'rejected' | 'completed' | 'converted'
       admin_role: 'admin' | 'hr_manager' | 'system_admin'
     }
   }
