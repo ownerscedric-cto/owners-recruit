@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       email: applicant.email,
       phone: applicant.phone,
       team: applicant.recruiters?.team || '미배정',
-      position: '사원', // 기본 직급
+      position: '팀장', // 기본 직급
       active: true
     }
 
