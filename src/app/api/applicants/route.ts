@@ -4,6 +4,58 @@ import { Database } from '@/types/database'
 
 type ApplicantRow = Database['public']['Tables']['applicants']['Row']
 
+export async function GET() {
+  try {
+    const supabaseService = createSupabaseServiceRoleClient()
+
+    const { data, error } = await supabaseService
+      .from('applicants')
+      .select(`
+        id,
+        name,
+        email,
+        phone,
+        address,
+        birth_date,
+        resident_number,
+        bank_name,
+        bank_account,
+        life_insurance_pass_date,
+        life_education_date,
+        final_school,
+        documents_confirmed,
+        document_preparation_date,
+        applicant_type,
+        waiting_for_schedule,
+        status,
+        submitted_at,
+        appointment_deadline,
+        recruiters:recruiters!applicants_recruiter_id_fkey (
+          name,
+          team
+        )
+      `)
+      .is('deleted_at', null)
+      .order('submitted_at', { ascending: false })
+
+    if (error) {
+      console.error('API: Error fetching applicants:', error)
+      return NextResponse.json(
+        { success: false, error: `지원자 목록 조회에 실패했습니다: ${error.message}` },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    console.error('API: Error in GET applicants:', error)
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const requestData = await request.json()

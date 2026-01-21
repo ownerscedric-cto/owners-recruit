@@ -104,41 +104,20 @@ export async function createApplicant(data: ApplicantFormData) {
 
 export async function getApplicants() {
   try {
-    const { data, error } = await supabase
-      .from('applicants')
-      .select(`
-        id,
-        name,
-        email,
-        phone,
-        address,
-        birth_date,
-        resident_number,
-        bank_name,
-        bank_account,
-        life_insurance_pass_date,
-        life_education_date,
-        final_school,
-        documents_confirmed,
-        document_preparation_date,
-        applicant_type,
-        waiting_for_schedule,
-        status,
-        submitted_at,
-        appointment_deadline,
-        recruiters (
-          name,
-          team
-        )
-      `)
-      .is('deleted_at', null)  // Only fetch non-deleted applicants
-      .order('submitted_at', { ascending: false })
+    const response = await fetch('/api/applicants', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
 
-    if (error) {
-      throw new Error(`지원자 목록 조회에 실패했습니다: ${error.message}`)
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || '지원자 목록 조회에 실패했습니다.')
     }
 
-    return { success: true, data }
+    const result = await response.json()
+    return result
   } catch (error) {
     return {
       success: false,
