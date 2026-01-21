@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     // 1. 지원자 정보 조회
     const { data: applicant, error: applicantError } = await (supabase as any)
       .from('applicants')
-      .select('*, recruiters(name, team)')
+      .select('*, recruiters:recruiters!applicants_recruiter_id_fkey(name, team)')
       .eq('id', applicantId)
       .eq('status', 'completed')
       .single()
